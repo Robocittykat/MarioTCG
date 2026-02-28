@@ -1,0 +1,57 @@
+html {
+  height: 100%;
+  width: 100%;
+}
+body{
+	background-color: #888;
+	
+}
+
+.gameCard{
+	width: 8vw;
+	margin: 0;
+	padding: 0;
+	display: inline-block;
+}
+.queueCard{
+	width: 8%;
+	
+}
+
+#opponentHand{
+	position: absolute;
+	left: calc(30%);
+}
+#userHand{
+	position: absolute;
+	left: calc(30% - 4px);
+	overflow-y: hidden;
+	overflow-x: auto;
+}
+
+#opponentDiscard{
+	position: absolute;
+	left: calc(92%);
+}
+#userDiscard{
+	position: absolute;
+	left: calc(92% - 8px)
+}
+
+#opponentGameArea{
+	transform: rotateZ(180deg);
+	margin-bottom: 0;
+}
+#userGameArea{
+	width: calc(100vw-8px)
+}
+
+#gameDiv{
+	font-size: 0;
+}
+
+hr{
+	border: 2px solid black;
+	margin-top: 10px;
+	margin-bottom: 10px;
+}
