@@ -1,0 +1,17 @@
+{
+  "name": "mariocardgame",
+  "version": "1.0.0",
+  "description": "A TCG based on Super Mario Brothers. Wahoo!",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "author": "Robocittykat",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "nodemon": "^3.1.14"
+  }
+}

@@ -1,0 +1,34 @@
+{
+    "Robocittykat": {
+        "pass": "-0.8348517978291875",
+        "accountCreated": {
+            "year": 2026,
+            "month": 3,
+            "day": 1
+        }
+    },
+    "Firepaw10000": {
+        "pass": "-0.6997925285326829",
+        "accountCreated": {
+            "year": 2026,
+            "month": 3,
+            "day": 1
+        }
+    },
+    "JohnAnderson": {
+        "pass": "0.9654211290899837",
+        "accountCreated": {
+            "year": 2026,
+            "month": 3,
+            "day": 1
+        }
+    },
+    "test": {
+        "pass": "0.7133293851331317",
+        "accountCreated": {
+            "year": 2026,
+            "month": 3,
+            "day": 1
+        }
+    }
+}
