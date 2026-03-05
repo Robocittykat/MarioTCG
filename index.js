@@ -88,7 +88,7 @@ app.get('/users', (req, res) => {
 
 
 app.get('/cardnames', (req, res) => {
-	let cardnames = fs.readdirSync('./images/');
+	let cardnames = fs.readdirSync(path.join(__dirname, 'images'),"utf-8");
 	res.json(cardnames);
 });
 
