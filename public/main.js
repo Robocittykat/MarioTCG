@@ -34,6 +34,8 @@ async function logIn(){
 		let success = await res.text()
 		if(success == "false"){
 			alert("username or password is incorrect")
+		}else{
+			alert("signed in!")
 		}
 	}
 	
