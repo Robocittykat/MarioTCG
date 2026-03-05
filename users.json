@@ -30,5 +30,13 @@
             "month": 3,
             "day": 1
         }
-    }
+    },
+	"person": {
+		"pass": "1",
+		"accountCreated": {
+			"year": 2026,
+			"month": 3,
+			"day": 4
+		}
+	}
 }
