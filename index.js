@@ -6,6 +6,7 @@ const PORT = 3000;
 
 // Serve frontend from public/
 app.use(express.static(path.join(__dirname, "public")));
+//app.use('/images',express.static('images'))
 
 app.get("/test", (req, res) => {
   res.send("Test successful!")
@@ -37,11 +38,12 @@ app.get('/', (req, res) => {
 
 
 app.get('/cardimg', function(req, res){
+	
 	// root/cardimg?name=<name>
 	let name = req.query["name"];
+	
 
-
-	res.send(fs.readFileSync(path.join(__dirname, "images/"+name), "utf-8"))
+	res.sendFile(path.join(__dirname, "images/"+name))
 
 });
 
