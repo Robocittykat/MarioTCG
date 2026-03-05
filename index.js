@@ -41,7 +41,7 @@ app.get('/cardimg', function(req, res){
 	let name = req.query["name"];
 
 
-	res.sendFile(fs.readFileSync(path.join(__dirname, name),"utf-8"))
+	res.sendFile("/images/" + name, {root:'https://github.com/Robocittykat/MarioTCG'})
 
 });
 
