@@ -1,4 +1,4 @@
-const ROOT = "http://localhost:3000/"
+const ROOT = "https://mariotcg.vercel.app/"
 
 
 

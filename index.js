@@ -40,7 +40,9 @@ app.get('/cardimg', function(req, res){
 	// root/cardimg?name=<name>
 	let name = req.query["name"];
 
+
 	res.sendFile(fs.readFileSync(path.join(__dirname, name),"utf-8"))
+
 });
 
 
