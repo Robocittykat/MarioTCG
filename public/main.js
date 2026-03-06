@@ -1,4 +1,4 @@
-const ROOT = "https://mariotcg.vercel.app/"
+const ROOT = document.URL
 
 
 
