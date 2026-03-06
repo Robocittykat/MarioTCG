@@ -84,7 +84,7 @@ app.get('/login',function(req, res){
 
 
 app.get('/users', (req, res) => {
-	let usernames = fs.readdirSync('./users/');
+	let usernames = keys(JSON.parse(fs.readFileSync(path.join(__dirname,'users.json'),"utf-8")))
 	res.json(usernames);
 });
 
