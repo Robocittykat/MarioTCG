@@ -50,6 +50,7 @@ app.get('/cardimg', function(req, res){
 
 app.get('/accountdetails', function(req, res){
 	let username = req.query["u"]
+	console.log(fs.readFileSync(path.join(__dirname, 'users.json'),"utf-8"))
 	let userData = JSON.parse(fs.readFileSync(path.join(__dirname, 'users.json'),"utf-8"))
 	
 	if(username in userData){res.send("true")}else{res.send("false")}
