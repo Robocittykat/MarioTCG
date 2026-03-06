@@ -1,4 +1,4 @@
-const ROOT = "https://mariotcg.vercel.app/"
+const ROOT = document.URL
 
 
 
@@ -18,7 +18,7 @@ async function newCard(){
 
 async function logIn(){
 	let username = prompt("Please enter your username")
-	let pass = sineEncrypt(prompt("Please enter your password"))
+	let pass = sineEncrypt(prompt("Please enter your password (note: the site creator cannot vouch by any means for the quality of the encryption method, please do not use your default password on this site)"))
 	
 	
 	let userExists = await fetch(ROOT+"accountdetails?u=" + username)
