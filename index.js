@@ -138,8 +138,7 @@ app.get('/createGame',(req,res)=>{
 		pass: p,
 		gameCreated: new Date().getTime(),
 		isPublic: p == '',
-		p1: null,
-		p2: null,
+		players: []
 	}
 	
 	gameData[n] = game
@@ -152,6 +151,27 @@ app.get('/createGame',(req,res)=>{
 app.get('/deleteAllGames',(req,res)=>{
 	fs.writeFileSync('./games.json','{}')
 	res.send("You monster.")
+})
+app.get('/joinGame',(req,res)=>{
+    let gameName = req.query.n
+    let gamePass = req.query.p
+    let userSess = req.query.s
+
+    let userData = require("./users.json")
+    let gameData = require("./games.json")
+
+    if(gameData[gameName].pass != gamePass){
+	res.json(false)
+	return
+    }
+
+    if(gameData[gameName].players < 2){
+	gameData[gameName].players = gameData[gameName].players.concat(sessions[userSess].u)
+	fs.writeFileSync('./games.json',JSON.stringify(gameData))
+	res.json(true)
+    }else{
+	res.json(false)
+    }
 })
 
 /*

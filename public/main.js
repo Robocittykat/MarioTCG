@@ -13,7 +13,6 @@ function switchTab(tab){
 async function sessionData(){
 	let res = await fetch(ROOT+"sessionData?s="+session)
 	let data = await res.json()
-	console.log(data)
 	return data
 }
 
@@ -36,7 +35,7 @@ async function logIn(){
 		if(localStorage.session in await (await fetch(ROOT + "sessionIDs")).json()){
 			session = localStorage.session
 			switchTab(signedIn)
-			signedInUsernameLabel.innerHTML = await (await fetch(ROOT+"sessionData?s="+session)).json().u
+		        signedInUsernameLabel.innerHTML = (await sessionData()).u
 			return
 		}else{
 			localStorage.removeItem("session")
@@ -61,7 +60,7 @@ async function logIn(){
 			localStorage.session = session
 			
 			switchTab(signedIn)
-			signedInUsernameLabel.innerHTML = await (await fetch(ROOT+"sessionData?s="+session)).json().u
+		        signedInUsernameLabel.innerHTML = (await sessionData()).u
 		}
 	}else{
 		let res = await fetch(ROOT+"login?u="+username+"&p="+pass)
@@ -75,7 +74,7 @@ async function logIn(){
 			localStorage.session = session
 			
 			switchTab(signedIn)
-			signedInUsernameLabel.innerHTML = await (await fetch(ROOT+"sessionData?s="+session)).json().u
+		        signedInUsernameLabel.innerHTML = (await sessionData()).u
 		}
 	}
 	
@@ -104,9 +103,18 @@ async function createGame(){
 		pass = sineEncrypt(pass)
 	}
 	
-	let gameCode = await (await fetch(ROOT+"createGame?n=" + name + "&p=" + pass)).json()
-	console.log(gameCode)
+	await fetch(ROOT+"createGame?n=" + name + "&p=" + pass)
+        await fetch(ROOT+"joinGame?n=" + name + "&p=" + pass + "&s=" + session)
 }
+async function joinGame(){
+    let allGameNames = await (await fetch(ROOT+"games")).json()
+
+    let gameName = prompt("Please enter game name")
+    if(gameName == null){return}
+    while(!(gameName in allGameNames)){
+	gameName = prompt("Game does not exist")
+	if(gameName == null){return}
+    }
 
 
 
