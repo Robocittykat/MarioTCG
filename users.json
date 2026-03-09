@@ -30,5 +30,29 @@
             "month": 3,
             "day": 1
         }
+    },
+    "dumbUsername": {
+        "pass": "-0.47585107814294403",
+        "accountCreated": {
+            "year": 2026,
+            "month": 3,
+            "day": 6
+        }
+    },
+    "ago08": {
+        "pass": "0.9356098782845558",
+        "accountCreated": {
+            "year": 2026,
+            "month": 3,
+            "day": 6
+        }
+    },
+    "22carrots23": {
+        "pass": "-0.6248879847146285",
+        "accountCreated": {
+            "year": 2026,
+            "month": 3,
+            "day": 6
+        }
     }
 }
