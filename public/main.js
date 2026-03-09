@@ -1,6 +1,21 @@
 const ROOT = document.URL
 
+let session = -1
+let currentGame = -1
 
+let currentTab = signedOut
+function switchTab(tab){
+	currentTab.hidden = true
+	tab.hidden = false
+}
+
+
+async function sessionData(){
+	let res = await fetch(ROOT+"sessionData?s="+session)
+	let data = await res.json()
+	console.log(data)
+	return data
+}
 
 async function showCard(){
 	const res = await fetch(ROOT + "cardimg?name=10_coins.png");
@@ -17,17 +32,36 @@ async function newCard(){
 }
 
 async function logIn(){
-	let username = prompt("Please enter your username")
-	let pass = sineEncrypt(prompt("Please enter your password (note: the site creator cannot vouch by any means for the quality of the encryption method, please do not use your default password on this site)"))
+	if(localStorage.session != undefined){
+		if(localStorage.session in await (await fetch(ROOT + "sessionIDs")).json()){
+			session = localStorage.session
+			switchTab(signedIn)
+			signedInUsernameLabel.innerHTML = await (await fetch(ROOT+"sessionData?s="+session)).json().u
+			return
+		}else{
+			localStorage.removeItem("session")
+		}
+	}
 	
+	
+	let username = prompt("Please enter your username")
+	if(username == null){return}
+	let pass = sineEncrypt(prompt("Please enter your password (note: please do not use your default password on this site)"))
+	if(pass == null){return}
 	
 	let userExists = await fetch(ROOT+"accountdetails?u=" + username)
-	userExists = await userExists.text()
+	userExists = await userExists.json()
 	
-	if(userExists != "true"){
+	if(!userExists){
 		if(confirm("No account exists under this username. Would you like to make a new account?")){
 			let res = await fetch(ROOT+"signup?u="+username+"&p="+pass)
-			console.log(await res.json())
+			alert("signed in!")
+			
+			session = await fetch(ROOT + "initSession?u=" + username + "&p=" + pass).json()
+			localStorage.session = session
+			
+			switchTab(signedIn)
+			signedInUsernameLabel.innerHTML = await (await fetch(ROOT+"sessionData?s="+session)).json().u
 		}
 	}else{
 		let res = await fetch(ROOT+"login?u="+username+"&p="+pass)
@@ -36,11 +70,42 @@ async function logIn(){
 			alert("username or password is incorrect")
 		}else{
 			alert("signed in!")
+			
+			session = await (await fetch(ROOT + "initSession?u=" + username + "&p=" + pass)).text()
+			localStorage.session = session
+			
+			switchTab(signedIn)
+			signedInUsernameLabel.innerHTML = await (await fetch(ROOT+"sessionData?s="+session)).json().u
 		}
 	}
 	
 	
 	
+}
+async function signOut(){
+	await fetch(ROOT+"endSession?s="+session)
+	session = -1
+	localStorage.removeItem("session")
+	switchTab(signedOut)
+}
+
+async function createGame(){
+	let allGameNames = await (await fetch(ROOT+"games")).json()
+	console.log(allGameNames)
+	let name = prompt("Please enter the game name")
+	if(name == null){return}
+	while(name in allGameNames){
+		name = prompt("A game with that name already exists. Please enter another name.")
+		if(name == null){return}
+	}
+	let pass = prompt("Please enter a password (leave blank for a public game)")
+	if(pass == null){return}
+	if(pass != ''){
+		pass = sineEncrypt(pass)
+	}
+	
+	let gameCode = await (await fetch(ROOT+"createGame?n=" + name + "&p=" + pass)).json()
+	console.log(gameCode)
 }
 
 
@@ -153,13 +218,13 @@ function loadDecks(player){
 }*/
 
 function sineEncrypt(input){ //I have no clue if this is a good way to do this
-	let values = {"0":21.51022050274092,"1":1.3591409142295225,"2":1.8472640247326624,"3":2.510692115398458,"4":3.4123843770715143,"5":4.637911221955518,"6":6.303574898323984,"7":8.56744655022233,"8":11.644367136881746,"9":15.826335796045663,"`":1,"-":29.235420759373916,"=":39.73505649878023,"q":54.00554101671389,"w":73.4011403909165,"e":99.76249305639978,"r":135.5912860184916,"t":184.28766444072934,"y":250.47290472919636,"u":340.427972723364,"i":462.68958607653593,"o":628.8603470245424,"p":854.7098269776315,"[":1161.671095639335,"]":1578.8747149612568,"a":2145.9132235463194,"s":2916.5984605079666,"d":3964.0682980552156,"f":5387.727410687033,"g":7322.680758580633,"h":9952.555020828215,"j":13526.924729928085,"k":18384.996844148394,"l":24987.801418862735,";":33961.94326501886,"\'":46159.066618228906,"z":62736.67600348107,"x":85267.98317909261,"c":115891.20461253948,"v":157512.47778824758,"b":214081.65306367617,"n":290967.1336647323,"m":395465.33605982794,",":537493.11839844,".":730528.8883321326,"/":992891.7011588116,"~":1349479.734443893,"!":1834133.120006286,"@":2492845.3655439904,"#":3388128.1291582873,"$":4604943.562990956,"%":6258767.204178883,"^":8506546.57983744,"&":11561595.495456276,"*":15713837.471646374,"(":21357319.42726758,")":29027606.651868403,"_":39452607.84271539,"+":53621653.49208703,"Q":72879383.14973383,"W":99053351.4426129,"E":134627462.63721108,"R":182977692.64913997,"T":248692468.4707607,"Y":338008108.9593464,"U":459400650.22799814,"I":624390219.7485185,"O":848634294.1049739,"P":1153413590.3363597,"{":1567651601.654516,"}":2130659431.0660942,"|":2895866407.0509257,"A":3935890515.965758,"S":5349429834.177007,"D":7270628955.43002,"F":9881809285.506798,"G":13430771306.545492,"H":18254310792.38588,"J":24810180658.993187,"K":33720531623.063618,"L":45830954178.47621,":":62290724962.14551,"\"":84661872873.07019,"Z":115067415297.08824,"X":156392832024.91266,"C":212559896697.28394,"V":288898852325.6794,"B":392654250269.7836,"N":533672456687.7815,"M":725336070681.7466,"<":985833930230.0387,">":1339887229211.3381,"?":1821095553674.76}
+	let values = {"0":0.2648849389096455,"1":0.48445246803627073,"2":0.6079695596071263,"3":0.4347102087625656,"4":0.7497362247741212,"5":0.379626356779714,"6":0.8030344337789945,"7":0.5840142039764469,"8":0.7945428581249087,"9":0.3838033958563928,"`":0.6566532206217444,"-":0.1391123542912388,"=":0.860287038799161,"q":0.08829401863666875,"w":0.8284398460335591,"e":0.26496082607415594,"r":0.6352589378962296,"t":0.6008716191406978,"y":0.4419788468357493,"u":0.5492310991633274,"i":0.6222973330612859,"o":0.7400855639184457,"p":0.5537403449291386,"[":0.15952612104864472,"]":0.11719867358568048,"a":0.6926922237077174,"s":0.10818859417955606,"d":0.4152933064442874,"f":0.5252826174733366,"g":0.7324790170742613,"h":0.9614996667362165,"j":0.4976839063737777,"k":0.8908284219250047,"l":0.7989998273231975,";":0.5401491684628414,"\'":0.8304253306024914,"z":0.15819054408159028,"x":0.138686880195394,"c":0.6200710038013678,"v":0.250931499994009,"b":0.5206280182000939,"n":0.3970973048465294,"m":0.34591719153420475,",":0.6549225573238822,".":0.33704622529297035,"/":0.8942722180196843,"~":0.6080143642632425,"!":0.9499357400474144,"@":0.18870906195503423,"#":0.009410113578408486,"$":0.03809323716254431,"%":0.14072348907706445,"^":0.31001202883437895,"&":0.4537004379072094,"*":0.21379221126391634,"(":0.31069470061482807,")":0.2636747633562989,"_":0.6016543610303652,"+":0.10654255875856378,"Q":0.13224168149927562,"W":0.3804576825231806,"E":0.299628620988057,"R":0.6779138447492367,"T":0.9910729064307701,"Y":0.5991212603670143,"U":0.42656889425471345,"I":0.7643025182091131,"O":0.8521472759254003,"P":0.28976253589447376,"{":0.215941745460548,"}":0.2567045972051514,"|":0.8830614783236929,"A":0.6641495272684825,"S":0.21698158960836544,"D":0.16612824381173596,"F":0.08244347947846398,"G":0.68073315259424,"H":0.13693900048691543,"J":0.9729881828524066,"K":0.24514578508772278,"L":0.4513171559046446,":":0.4151600781180088,"\"":0.5529331659261127,"Z":0.5068645952478222,"X":0.9228973239917062,"C":0.6094198159440088,"V":0.025732334161693737,"B":0.21036251602088707,"N":0.7871282076468441,"M":0.9991663711012584,"<":0.14040673790768743,">":0.7785947450492902,"?":0.9472721918142661}
 	let total = 0
 	for(let i = 0; i<input.length; i++){
 		if(!(input[i] in values)){
 			throw new Error("Invalid Character!")
 		}else{
-			total += values[input[i]]*(i+1)
+			total += values[input[i]]*(1.1**i)
 		}
 	}
 	return Math.sin(total)
