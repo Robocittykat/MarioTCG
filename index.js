@@ -6,7 +6,19 @@ const PORT = 3000;
 
 // Serve frontend from public/
 app.use(express.static(path.join(__dirname, "public")));
+//app.use(express.static(path.join(__dirname, "favicon.ico")))
 //app.use('/images',express.static('images'))
+
+let sessions = {
+/*	0.12345:{			*\
+		u:"sampleUser",
+		p:"0.12345"
+\*	}					*/
+	"-1":{
+		u:"Robocittykat",
+		p:"-0.9067791778486455"
+	}
+}
 
 app.get("/test", (req, res) => {
   res.send("Test successful!")
@@ -16,16 +28,7 @@ app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 })
 
-/*
-const users = [
-  { name: 'Mario' },
-  { name: 'Luigi' },
-  { name: 'Peach' },
-];
 
-
-
-*/
 
 
 //carded jumping man
@@ -53,7 +56,7 @@ app.get('/accountdetails', function(req, res){
 	console.log(fs.readFileSync(path.join(__dirname, 'users.json'),"utf-8"))
 	let userData = JSON.parse(fs.readFileSync(path.join(__dirname, 'users.json'),"utf-8"))
 	
-	if(username in userData){res.send("true")}else{res.send("false")}
+	if(username in userData){res.send(true)}else{res.send(false)}
 })
 
 app.get('/signup',function(req, res){
@@ -76,44 +79,82 @@ app.get('/login',function(req, res){
 	let pass = req.query["p"]
 	let userData = JSON.parse(fs.readFileSync(path.join(__dirname, 'users.json'),"utf-8"))
 	if(userData[username].pass == pass){
-		res.send("true")
+		res.send(true)
 	}else{
-		res.send("false")
+		res.send(false)
 	}
+})
+
+app.get('/initSession',function(req,res){
+	let username = req.query["u"]
+	let pass = req.query["p"]
+	
+	let sessionID = Math.random()
+	while(sessionID in Object.keys(sessions)){
+		sessionID = Math.random()
+	}
+	
+	sessions[sessionID] = {u:username,p:pass}
+	
+	res.send(sessionID)
 })
 
 
 
 app.get('/users', (req, res) => {
-	let usernames = keys(JSON.parse(fs.readFileSync(path.join(__dirname,'users.json'),"utf-8")))
+	let usernames = Object.keys(JSON.parse(fs.readFileSync(path.join(__dirname,'users.json'),"utf-8")))
 	res.json(usernames);
 });
+
+app.get('/sessionIDs',(req,res) => {
+	res.send(sessions)
+})
+app.get('/sessionData',(req,res) => {
+	let s = req.query["s"]
+	res.json(sessions[s])
+})
+app.get('/endSession',(req,res) => {
+	let s = req.query["s"]
+	delete sessions["s"]
+})
 
 
 app.get('/cardnames', (req, res) => {
 	let cardnames = fs.readdirSync(path.join(__dirname, 'images'),"utf-8");
 	res.json(cardnames);
 });
+app.get('/games',(req,res)=>{
+	res.send(Object.keys(require("./games.json")))
+})
 
 
-app.get('/delete-games', (req, res) => {
-	res.send("You have deleted all the games on the server. Are you happy with your decision?<br><button>yes</button>")
-	let games = fs.readdirSync('./games/');
-	for (let g of games){
-		fs.unlinkSync("./games/"+g);
+app.get('/createGame',(req,res)=>{
+	let n = req.query.n
+	let p = req.query.p
+	
+	let gameData = require("./games.json")
+	
+	let game = {
+		pass: p,
+		gameCreated: new Date().getTime(),
+		isPublic: p == '',
+		p1: null,
+		p2: null,
 	}
-});
+	
+	gameData[n] = game
+	
+	fs.writeFileSync('./games.json', JSON.stringify(gameData,null,4))
+	
+	res.json(true)
+	
+})
+app.get('/deleteAllGames',(req,res)=>{
+	fs.writeFileSync('./games.json','{}')
+	res.send("You monster.")
+})
 
-
-app.get('/create-account', function(req,res){
-	// root/create-account?name=<name>
-	let name = req.query["name"];
-	let user_json = JSON.stringify({"deck":newDeck()})
-	fs.writeFileSync("users/"+name+".json",user_json);
-	res.send("success");
-});
-
-
+/*
 app.get('/create-game', function(req,res){
 	// root/create-game?u=<account>
 	const user = req.query["u"];
@@ -257,7 +298,7 @@ function newDeck(){
 
 
 
-
+*/
 
 
 
