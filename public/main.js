@@ -3,15 +3,20 @@ const ROOT = document.URL
 let session = -1
 let currentGame = -1
 
+let inGame = false
+
+let choice = 0
+
 let currentTab = signedOut
 function switchTab(tab){
 	currentTab.hidden = true
 	tab.hidden = false
+	currentTab = tab
 }
 
 
 async function sessionData(){
-	let res = await fetch(ROOT+"sessionData?s="+session)
+	let res = await fetch(ROOT+"sessionData?s="+sineEncrypt(session+""))
 	let data = await res.json()
 	return data
 }
@@ -32,10 +37,10 @@ async function newCard(){
 
 async function logIn(){
 	if(localStorage.session != undefined){
-		if(localStorage.session in await (await fetch(ROOT + "sessionIDs")).json()){
+		if(sineEncrypt(localStorage.session) in await (await fetch(ROOT + "sessionIDs")).json()){
 			session = localStorage.session
 			switchTab(signedIn)
-		        signedInUsernameLabel.innerHTML = (await sessionData()).u
+		    signedInUsernameLabel.innerHTML = (await sessionData()).u
 			return
 		}else{
 			localStorage.removeItem("session")
@@ -56,11 +61,11 @@ async function logIn(){
 			let res = await fetch(ROOT+"signup?u="+username+"&p="+pass)
 			alert("signed in!")
 			
-			session = await fetch(ROOT + "initSession?u=" + username + "&p=" + pass).json()
+			session = await (await fetch(ROOT + "initSession?u=" + username + "&p=" + pass)).json()
 			localStorage.session = session
 			
 			switchTab(signedIn)
-		        signedInUsernameLabel.innerHTML = (await sessionData()).u
+		    signedInUsernameLabel.innerHTML = (await sessionData()).u
 		}
 	}else{
 		let res = await fetch(ROOT+"login?u="+username+"&p="+pass)
@@ -74,7 +79,7 @@ async function logIn(){
 			localStorage.session = session
 			
 			switchTab(signedIn)
-		        signedInUsernameLabel.innerHTML = (await sessionData()).u
+		    signedInUsernameLabel.innerHTML = (await sessionData()).u
 		}
 	}
 	
@@ -82,7 +87,7 @@ async function logIn(){
 	
 }
 async function signOut(){
-	await fetch(ROOT+"endSession?s="+session)
+	await fetch(ROOT+"endSession?s="+sineEncrypt(session))
 	session = -1
 	localStorage.removeItem("session")
 	switchTab(signedOut)
@@ -104,18 +109,64 @@ async function createGame(){
 	}
 	
 	await fetch(ROOT+"createGame?n=" + name + "&p=" + pass)
-        await fetch(ROOT+"joinGame?n=" + name + "&p=" + pass + "&s=" + session)
+    await fetch(ROOT+"joinGame?n=" + name + "&p=" + pass + "&s=" + sineEncrypt(session))
+	
+	switchTab(rps)
+	currentGame = name
+	inGame = true
+	updateGame()
 }
 async function joinGame(){
     let allGameNames = await (await fetch(ROOT+"games")).json()
 
     let gameName = prompt("Please enter game name")
     if(gameName == null){return}
-    while(!(gameName in allGameNames)){
-	gameName = prompt("Game does not exist")
-	if(gameName == null){return}
-    }
+	if(!(gameName in allGameNames)){return alert("game does not exist")}
+	
+	
+	let game = allGameNames[gameName]
+	
+	let pass = ''
+	if(!game.isPublic){
+		pass = prompt("Please enter game password")
+		pass = sineEncrypt(pass)
+	}
+	
+	await fetch(ROOT+"joinGame?n=" + gameName + "&p=" + pass + "&s=" + sineEncrypt(session))
+	
+	switchTab(rps)
+	currentGame = gameName
+	inGame = true
+	updateGame()
+}
 
+
+async function updateGame(){
+	let i = 1
+	for(let player of (await (await fetch(ROOT + "games")).json())[currentGame].players){
+		document.getElementById("rpsP"+i).innerHTML = player
+		i ++
+	}
+	
+	
+	let winner = (await (await fetch(ROOT+"games")).json())[currentGame].playerData.winner
+	if(winner != null){
+		rpsWinner.innerHTML = "Winner: " + winner
+	}
+	
+	
+	
+	if(inGame){setTimeout(updateGame,5000)}
+}
+
+function rpsChoice(number){
+	let mapping = ["rock","paper","scissors"]
+	choice = number
+	rpsCurrentChoice.innerHTML = mapping[number]
+}
+async function rpsSubmit(){
+	await fetch(ROOT+"rpsSubmit?choice=" + choice + "&s=" + sineEncrypt(session) + "&g=" + currentGame)
+}
 
 
 

@@ -25,6 +25,15 @@
 		<button disabled>Shop</button>
 		<button onclick="signOut()">Sign out</button>
 	</div>
+	<div id="rps" hidden>
+		<h1><span id="rpsP1"></span> vs. <span id="rpsP2"></span></h1>
+		<button onclick="rpsChoice(0)">rock</button>
+		<button onclick="rpsChoice(1)">paper</button>
+		<button onclick="rpsChoice(2)">scissiors</button><br>
+		<text>Current choice: <span id="rpsCurrentChoice">rock</span></text><br>
+		<h1 id="rpsWinner"></h1>
+		<button onclick="rpsSubmit()">Submit</button>
+	</div>
 	<!--
 	<div id="gameDiv" hidden>
 		<div id="opponentGameArea">
