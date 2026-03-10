@@ -21,7 +21,15 @@ let sessions = {
 	}
 }
 */
-let sessions = require("./sessions.json")
+function getSessions(){
+    return JSON.parse(fs.readFile("./sessions.json"))
+}
+function getGames(){
+    return JSON.parse(fs.readFile("./games.json"))
+}
+function getUsers(){
+    return JSON.parse(fs.readFile("./users.json"))
+}
 
 app.get("/test", (req, res) => {
   res.send("Test successful!")
@@ -56,22 +64,20 @@ app.get('/cardimg', function(req, res){
 
 app.get('/accountdetails', function(req, res){
 	let username = req.query["u"]
-	let userData = JSON.parse(fs.readFileSync(path.join(__dirname, 'users.json'),"utf-8"))
-	
+    let userData = getUsers()	
 	if(username in userData){res.send(true)}else{res.send(false)}
 })
 
 app.get('/signup',function(req, res){
 	let username = req.query["u"]
 	let pass = req.query["p"]
-	let userData = JSON.parse(fs.readFileSync(path.join(__dirname, 'users.json'),"utf-8"))
+    let userData = getUsers()
 	
-	const jsonData = require('./users.json')
-	jsonData[username] = {
+	userData[username] = {
 		"pass":pass,
 		"accountCreated":{"year":new Date().getFullYear(), "month":new Date().getMonth() + 1, "day":new Date().getDate()},
 	}
-	fs.writeFileSync('./users.json', JSON.stringify(jsonData,null,4))
+	fs.writeFileSync('./users.json', JSON.stringify(userData))
 	res.json(jsonData[username])
 	return
 })
@@ -79,7 +85,7 @@ app.get('/signup',function(req, res){
 app.get('/login',function(req, res){
 	let username = req.query["u"]
 	let pass = req.query["p"]
-	let userData = JSON.parse(fs.readFileSync(path.join(__dirname, 'users.json'),"utf-8"))
+    let userData = getUsers()
 	if(userData[username].pass == pass){
 		res.send(true)
 	}else{
@@ -106,19 +112,24 @@ app.get('/initSession',function(req,res){
 
 
 app.get('/users', (req, res) => {
-	let usernames = Object.keys(JSON.parse(fs.readFileSync(path.join(__dirname,'users.json'),"utf-8")))
+    let usernames = getUsers()
 	res.json(usernames);
 });
 
 app.get('/sessionIDs',(req,res) => {
-	res.send(sessions)
+    let sessions = getSessions()
+    res.send(sessions)
 })
 app.get('/sessionData',(req,res) => {
-	let s = req.query["s"]
+    let s = req.query["s"]
+    let sessions = getSessions()
+    console.log(sessions)
+    console.log(sessions[s])
 	res.json(sessions[s])
 })
 app.get('/endSession',(req,res) => {
-	let s = req.query["s"]
+    let s = req.query["s"]
+    let sessions = getSessions()
 	delete sessions["s"]
 	fs.writeFileSync('./sessions.json',JSON.stringify(sessions))
 	res.send("session "+s+" has been terminated.<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><sub>you monster</sub>")
@@ -130,7 +141,7 @@ app.get('/cardnames', (req, res) => {
 	res.json(cardnames);
 });
 app.get('/games',(req,res)=>{
-	res.send(require("./games.json"))
+    res.send(getGames())
 })
 
 
@@ -138,7 +149,7 @@ app.get('/createGame',(req,res)=>{
 	let n = req.query.n
 	let p = req.query.p
 	
-	let gameData = require("./games.json")
+    let gameData = getGames()
 	
 	let game = {
 		pass: p,
@@ -169,8 +180,9 @@ app.get('/joinGame',(req,res)=>{
     let userSess = req.query.s
 	//console.log(gameName,gamePass,userSess)
 
-    let userData = require("./users.json")
-    let gameData = require("./games.json")
+    let userData = getUsers()
+    let gameData = getGames()
+    let sessions = getSessions()
 
     if(gameData[gameName].pass != gamePass){
 		res.json(false)
@@ -199,7 +211,8 @@ app.get('/rpsSubmit',(req,res)=>{
 	let s = req.query.s
 	let g = req.query.g
 	
-	const games = require("./games.json")
+    const games = getGames()
+    let sessions = getSessions()
 	
 	let user = sessions[s]
 	

@@ -165,7 +165,11 @@ function rpsChoice(number){
 	rpsCurrentChoice.innerHTML = mapping[number]
 }
 async function rpsSubmit(){
-	await fetch(ROOT+"rpsSubmit?choice=" + choice + "&s=" + sineEncrypt(session) + "&g=" + currentGame)
+        await fetch(ROOT+"rpsSubmit?choice=" + choice + "&s=" + sineEncrypt(session) + "&g=" + currentGame)
+    rps0.disabled = true
+    rps1.disabled = true
+    rps2.disabled = true
+    submitButton.disabled = true
 }
 
 
