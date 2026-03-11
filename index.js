@@ -22,13 +22,13 @@ let sessions = {
 }
 */
 function getSessions(){
-    return JSON.parse(fs.readFile("./sessions.json"))
+    return JSON.parse(fs.readFileSync(path.join(__dirname,"sessions.json")))
 }
 function getGames(){
-    return JSON.parse(fs.readFile("./games.json"))
+    return JSON.parse(fs.readFileSync(path.join(__dirname,"games.json")))
 }
 function getUsers(){
-    return JSON.parse(fs.readFile("./users.json"))
+    return JSON.parse(fs.readFileSync(path.join(__dirname,"users.json")))
 }
 
 app.get("/test", (req, res) => {
@@ -97,6 +97,8 @@ app.get('/initSession',function(req,res){
 	let username = req.query["u"]
 	let pass = req.query["p"]
 	
+	let sessions = getSessions()
+	
 	let sessionID = Math.random()
 	while(sessionID in sessions){
 		sessionID = Math.random()
@@ -123,8 +125,6 @@ app.get('/sessionIDs',(req,res) => {
 app.get('/sessionData',(req,res) => {
     let s = req.query["s"]
     let sessions = getSessions()
-    console.log(sessions)
-    console.log(sessions[s])
 	res.json(sessions[s])
 })
 app.get('/endSession',(req,res) => {
@@ -246,6 +246,8 @@ app.get('/rpsSubmit',(req,res)=>{
 			games[g].playerData.winner = "tie"
 		}
 	}
+	
+	fs.writeFileSync('./games.json',JSON.stringify(games))
 	
 	res.json(true)
 })
@@ -419,6 +421,7 @@ function sineEncrypt(input){ //I have no clue if this is a good way to do this
 function deleteOldSessions(){
 
 	let currTime = new Date().getTime()
+	let sessions = getSessions()
 	
 	let sessionsRemoved = false
 	for(let i of Object.keys(sessions)){
