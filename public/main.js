@@ -22,7 +22,7 @@ async function sessionData(){
 }
 
 async function showCard(){
-	const res = await fetch(ROOT + "cardimg?name=10_coins.png");
+	const res = await fetch(ROOT + "10_coins.png");
 	//let data = await res.file()
 	console.log(data)
 	//demoCard = data
@@ -31,7 +31,7 @@ async function showCard(){
 async function newCard(){
 	const CardList = await (await fetch(ROOT + "cardnames")).json()
 	let cardName = CardList[Math.floor(Math.random()*CardList.length)]
-	demoCard.src = ROOT+"cardimg?name="+cardName
+	demoCard.src = ROOT+cardName
 	console.log(cardName)
 }
 

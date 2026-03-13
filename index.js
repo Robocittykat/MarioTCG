@@ -1,11 +1,31 @@
-const express = require("express");
+import express from "express"
+import * as path from "path"
+import * as fs from "fs"
+
+/*const express = require("express");
 const path = require("path");
-const fs = require("fs");
+const fs = require("fs");*/
 const app = express();
 const PORT = 3000;
 
+import { put } from '@vercel/blob';
+import { get } from '@vercel/blob'
+//import { PutBlobResult } from '@vercel/blob';
+
+async function blobify(blobName,blobData){
+	const blob = await put(blobName, blobData, {access: 'private',token: "vercel_blob_rw_IPe82djrbfwUAuzA_MMVlp7DYVJBlNgJjGbcuHhwlYMrYCU",allowOverwrite:true})
+}
+async function unblobify(blobName){
+	let blob = await get(blobName, {access: "private", token: "vercel_blob_rw_IPe82djrbfwUAuzA_MMVlp7DYVJBlNgJjGbcuHhwlYMrYCU"})
+	blob = await blob.stream.getReader().read()
+	console.log(blob)
+	blob = new TextDecoder().decode(blob).value
+	return blob
+}
+
 // Serve frontend from public/
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static("./public"));
+app.use(express.static("./images"))
 //app.use(express.static(path.join(__dirname, "favicon.ico")))
 //app.use('/images',express.static('images'))
 
@@ -21,17 +41,18 @@ let sessions = {
 	}
 }
 */
-function getSessions(){
-    return JSON.parse(fs.readFileSync(path.join(__dirname,"sessions.json")))
-}
-function getGames(){
-    return JSON.parse(fs.readFileSync(path.join(__dirname,"games.json")))
-}
-function getUsers(){
-    return JSON.parse(fs.readFileSync(path.join(__dirname,"users.json")))
+
+async function getUsers(){
+	let theText = await unblobify('users.json')
+	return JSON.parse(theText)
+    //return JSON.parse(fs.readFileSync("./users.json"))
 }
 
-app.get("/test", (req, res) => {
+let sessions = {}
+let games = {}
+
+
+app.get("/test", async (req,res) => {
   res.send("Test successful!")
 })
 
@@ -40,52 +61,58 @@ app.listen(PORT, () => {
 })
 
 
-
+app.get('/blobTest',async (req,res) => {
+	await blobify("test.txt","It's blobbin time")
+	const blobData = await unblobify("test.txt")
+	console.log(blobData)
+	res.json(blobData)
+})
 
 //carded jumping man
 
 
 
-app.get('/', (req, res) => {
+app.get('/', async (req,res) => {
   res.send('Hello World!');
 });
 
-
-app.get('/cardimg', function(req, res){
+/*
+app.get('/cardimg', async (req,res) => {
 	
 	// root/cardimg?name=<name>
 	let name = req.query["name"];
 	
 
-	res.sendFile(path.join(__dirname, "images/"+name))
+	res.sendFile(path.join(__dirname,"images/"+name))
 
-});
+});*/
 
 
-app.get('/accountdetails', function(req, res){
+app.get('/accountdetails', async (req,res) => {
 	let username = req.query["u"]
-    let userData = getUsers()	
+    let userData = await getUsers()	
 	if(username in userData){res.send(true)}else{res.send(false)}
 })
 
-app.get('/signup',function(req, res){
+app.get('/signup',async (req,res) => {
 	let username = req.query["u"]
 	let pass = req.query["p"]
-    let userData = getUsers()
+    let userData = await getUsers()
 	
 	userData[username] = {
 		"pass":pass,
 		"accountCreated":{"year":new Date().getFullYear(), "month":new Date().getMonth() + 1, "day":new Date().getDate()},
 	}
-	fs.writeFileSync('./users.json', JSON.stringify(userData))
+	//fs.writeFileSync('./users.json', JSON.stringify(userData))
+	await blobify('users.json',JSON.stringify(userData))
 	res.json(jsonData[username])
 	return
 })
 
-app.get('/login',function(req, res){
+app.get('/login',async (req,res) => {
 	let username = req.query["u"]
 	let pass = req.query["p"]
-    let userData = getUsers()
+    let userData = await getUsers()
 	if(userData[username].pass == pass){
 		res.send(true)
 	}else{
@@ -93,11 +120,10 @@ app.get('/login',function(req, res){
 	}
 })
 
-app.get('/initSession',function(req,res){
+app.get('/initSession',async (req,res) => {
 	let username = req.query["u"]
 	let pass = req.query["p"]
 	
-	let sessions = getSessions()
 	
 	let sessionID = Math.random()
 	while(sessionID in sessions){
@@ -105,7 +131,6 @@ app.get('/initSession',function(req,res){
 	}
 	
 	sessions[sineEncrypt(sessionID+"")] = {u:username,p:pass,dateCreated:new Date().getTime()}
-	fs.writeFileSync('./sessions.json',JSON.stringify(sessions))
 	
 	
 	res.send(sessionID)
@@ -113,43 +138,37 @@ app.get('/initSession',function(req,res){
 
 
 
-app.get('/users', (req, res) => {
-    let usernames = getUsers()
+app.get('/users', async (req,res) => {
+    let usernames = await getUsers()
 	res.json(usernames);
 });
 
-app.get('/sessionIDs',(req,res) => {
-    let sessions = getSessions()
+app.get('/sessionIDs',async (req,res) => {
     res.send(sessions)
 })
-app.get('/sessionData',(req,res) => {
+app.get('/sessionData',async (req,res) => {
     let s = req.query["s"]
-    let sessions = getSessions()
 	res.json(sessions[s])
 })
-app.get('/endSession',(req,res) => {
+app.get('/endSession',async (req,res) => {
     let s = req.query["s"]
-    let sessions = getSessions()
 	delete sessions["s"]
-	fs.writeFileSync('./sessions.json',JSON.stringify(sessions))
 	res.send("session "+s+" has been terminated.<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><sub>you monster</sub>")
 })
 
 
-app.get('/cardnames', (req, res) => {
-	let cardnames = fs.readdirSync(path.join(__dirname, 'images'),"utf-8");
+app.get('/cardnames', async (req,res) => {
+	let cardnames = fs.readdirSync("./images");
 	res.json(cardnames);
 });
-app.get('/games',(req,res)=>{
-    res.send(getGames())
+app.get('/games',async (req,res)=>{
+    res.json(games)
 })
 
 
-app.get('/createGame',(req,res)=>{
+app.get('/createGame',async (req,res)=>{
 	let n = req.query.n
 	let p = req.query.p
-	
-    let gameData = getGames()
 	
 	let game = {
 		pass: p,
@@ -165,39 +184,35 @@ app.get('/createGame',(req,res)=>{
 	
 	gameData[n] = game
 	
-	fs.writeFileSync('./games.json', JSON.stringify(gameData,null,4))
 	
 	res.json(true)
 	
 })
-app.get('/deleteAllGames',(req,res)=>{
-	fs.writeFileSync('./games.json','{}')
+app.get('/deleteAllGames',async (req,res)=>{
+	games = {}
 	res.send("You monster.")
 })
-app.get('/joinGame',(req,res)=>{
+app.get('/joinGame',async (req,res)=>{
     let gameName = req.query.n
     let gamePass = req.query.p
     let userSess = req.query.s
 	//console.log(gameName,gamePass,userSess)
 
-    let userData = getUsers()
-    let gameData = getGames()
-    let sessions = getSessions()
-
-    if(gameData[gameName].pass != gamePass){
+    let userData = await getUsers()
+	
+    if(games[gameName].pass != gamePass){
 		res.json(false)
 		console.log("join failed; invalid password")
 		return
     }
 	
-	if(gameData[gameName].players.includes(sessions[userSess].u)){
+	if(games[gameName].players.includes(sessions[userSess].u)){
 		res.json(true)
 		return
 	}
 	
-    if(gameData[gameName].players.length < 2){
-		gameData[gameName].players = gameData[gameName].players.concat(sessions[userSess].u)
-		fs.writeFileSync('./games.json',JSON.stringify(gameData))
+    if(games[gameName].players.length < 2){
+		games[gameName].players = games[gameName].players.concat(sessions[userSess].u)
 		res.json(true)
     }else{
 		res.json(false)
@@ -206,13 +221,11 @@ app.get('/joinGame',(req,res)=>{
 })
 
 
-app.get('/rpsSubmit',(req,res)=>{
+app.get('/rpsSubmit',async (req,res)=>{
 	let choice = req.query.choice
 	let s = req.query.s
 	let g = req.query.g
 	
-    const games = getGames()
-    let sessions = getSessions()
 	
 	let user = sessions[s]
 	
@@ -247,86 +260,13 @@ app.get('/rpsSubmit',(req,res)=>{
 		}
 	}
 	
-	fs.writeFileSync('./games.json',JSON.stringify(games))
 	
 	res.json(true)
 })
 
+
+
 /*
-app.get('/create-game', function(req,res){
-	// root/create-game?u=<account>
-	const user = req.query["u"];
-	const d = new Date(); //current date
-	
-	const date_code = d.getMonth() * 31 + d.getDate();
-	let id_code = 1;
-	while (true){
-		let game_code = date_code + "-" + id_code
-			
-		if (fs.existsSync("games/" + game_code + ".json")){
-			id_code++;
-		} else {
-			let gameData = {time:d.getTime(),
-						   p1:newPlayerObject(user),
-						   p2:{}}
-			
-			fs.writeFileSync("games/" + game_code + ".json",
-				JSON.stringify(gameData)
-			);
-			res.send(game_code);
-			return;
-		}
-	}
-	
-});
-
-
-app.get('/join', function(req,res){
-	// root/join?game=<game_code>&u=<account>
-	const user = req.query["u"];
-	const game_code = req.query["game"];
-	const filename = "games/"+game_code+".json"
-	
-	if(!fs.existsSync(filename)){
-		res.send("failure - game does not exist");
-		return
-	}
-
-	fs.readFile(filename, 'utf8', (err,data) => {
-		let gameData;
-		try {
-			gameData = JSON.parse(data);
-		} catch (parseError) {
-			console.log(parseError);
-			res.send("failure - game data was corrupted");
-			return;
-		}
-
-		if (user == gameData.p1.name || user == gameData.p2.name){
-			res.send("rejoin");
-			return;
-		} else if (gameData.p2.name) {
-			res.send("failure - game is already full");
-			return;
-		}
-		
-		gameData.p2 = newPlayerObject(user);
-		fs.writeFileSync(filename, JSON.stringify(gameData));
-		res.send(game_code)
-		
-	});
-	
-});
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -421,7 +361,6 @@ function sineEncrypt(input){ //I have no clue if this is a good way to do this
 function deleteOldSessions(){
 
 	let currTime = new Date().getTime()
-	let sessions = getSessions()
 	
 	let sessionsRemoved = false
 	for(let i of Object.keys(sessions)){
@@ -429,7 +368,5 @@ function deleteOldSessions(){
 			delete sessions[i]
 			sessionsRemoved = true
 		}
-	}if(sessionsRemoved){
-		fs.writeFileSync("./sessions.json",JSON.stringify(sessions))
 	}
 }setInterval(deleteOldSessions,60000)//clear check every minute
