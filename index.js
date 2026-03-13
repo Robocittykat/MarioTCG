@@ -17,9 +17,8 @@ async function blobify(blobName,blobData){
 }
 async function unblobify(blobName){
 	let blob = await get(blobName, {access: "private", token: "vercel_blob_rw_IPe82djrbfwUAuzA_MMVlp7DYVJBlNgJjGbcuHhwlYMrYCU"})
-	blob = await blob.stream.getReader().read()
 	console.log(blob)
-	blob = new TextDecoder().decode(blob).value
+	blob = new TextDecoder().decode((await blob.stream.getReader().read()).value)
 	return blob
 }
 
@@ -73,7 +72,7 @@ app.get('/blobTest',async (req,res) => {
 
 
 app.get('/', async (req,res) => {
-  res.send('Hello World!');
+  res.sendFile('./public/index.html');
 });
 
 /*
