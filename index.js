@@ -70,11 +70,11 @@ app.get('/blobTest',async (req,res) => {
 //carded jumping man
 
 
-
+/*
 app.get('/', async (req,res) => {
   res.sendFile('./public/index.html');
 });
-
+*/
 /*
 app.get('/cardimg', async (req,res) => {
 	
