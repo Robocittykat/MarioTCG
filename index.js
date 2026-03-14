@@ -7,6 +7,7 @@ const path = require("path");
 const fs = require("fs");*/
 const app = express();
 const PORT = 3000;
+const __dirname = import.meta.dirname
 
 import { put } from '@vercel/blob';
 import { get } from '@vercel/blob'
@@ -17,14 +18,12 @@ async function blobify(blobName,blobData){
 }
 async function unblobify(blobName){
 	let blob = await get(blobName, {access: "private", token: "vercel_blob_rw_IPe82djrbfwUAuzA_MMVlp7DYVJBlNgJjGbcuHhwlYMrYCU"})
-	console.log(blob)
-	blob = new TextDecoder().decode((await blob.stream.getReader().read()).value)
-	return blob
+	return new Response(blob.stream).text()
 }
 
 // Serve frontend from public/
 app.use(express.static("./public"));
-app.use(express.static("./images"))
+//app.use(express.static("./images"))
 //app.use(express.static(path.join(__dirname, "favicon.ico")))
 //app.use('/images',express.static('images'))
 
@@ -75,16 +74,16 @@ app.get('/', async (req,res) => {
   res.sendFile('./public/index.html');
 });
 */
-/*
+
 app.get('/cardimg', async (req,res) => {
 	
 	// root/cardimg?name=<name>
 	let name = req.query["name"];
 	
 
-	res.sendFile(path.join(__dirname,"images/"+name))
+	res.sendFile(path.join(__dirname,"images",name))
 
-});*/
+});
 
 
 app.get('/accountdetails', async (req,res) => {
@@ -181,7 +180,7 @@ app.get('/createGame',async (req,res)=>{
 		}
 	}
 	
-	gameData[n] = game
+	games[n] = game
 	
 	
 	res.json(true)

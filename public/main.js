@@ -31,7 +31,7 @@ async function showCard(){
 async function newCard(){
 	const CardList = await (await fetch(ROOT + "cardnames")).json()
 	let cardName = CardList[Math.floor(Math.random()*CardList.length)]
-	demoCard.src = ROOT+cardName
+	demoCard.src = "/cardimg?name="+cardName
 	console.log(cardName)
 }
 
