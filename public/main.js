@@ -1,4 +1,4 @@
-const ROOT = document.URL.substring(0,document.URL.length-11)
+const ROOT = document.URL.substring(0,document.URL.length-10)
 
 let session = -1
 let currentGame = -1
