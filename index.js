@@ -103,7 +103,7 @@ app.get('/signup',async (req,res) => {
 	}
 	//fs.writeFileSync('./users.json', JSON.stringify(userData))
 	await blobify('users.json',JSON.stringify(userData))
-	res.json(jsonData[username])
+	res.json(userData[username])
 	return
 })
 

@@ -160,7 +160,7 @@ async function updateGame(){
 }
 
 function rpsChoice(number){
-	let mapping = ["rock","paper","scissors"]
+	let mapping = ["boulder","flat","angle"]
 	choice = number
 	rpsCurrentChoice.innerHTML = mapping[number]
 }
