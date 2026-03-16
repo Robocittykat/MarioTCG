@@ -16,9 +16,13 @@ function switchTab(tab){
 
 
 async function sessionData(){
-	let res = await fetch(ROOT+"sessionData?s="+sineEncrypt(session))
+	try{
+	let res = await fetch(ROOT+"sessionData?s="+session)
 	let data = await res.json()
 	return data
+	}catch(e){
+		alert("sessionData failed: "+e)
+	}
 }
 
 async function showCard(){
@@ -37,7 +41,7 @@ async function newCard(){
 
 async function logIn(){
 	if(localStorage.session != undefined){
-		if(sineEncrypt(localStorage.session) in await (await fetch(ROOT + "sessionIDs")).json()){
+		if(await (await fetch(ROOT+"sessionExists?s="+localStorage.session)).json()){
 			session = localStorage.session
 			switchTab(signedIn)
 		    signedInUsernameLabel.innerHTML = (await sessionData()).u
@@ -51,7 +55,7 @@ async function logIn(){
 	
 	let username = prompt("Please enter your username")
 	if(username == null){return}
-	let pass = sineEncrypt(prompt("Please enter your password (note: please do not use your default password on this site)"))
+	let pass = prompt("Please enter your password (note: please do not use your default password on this site)")
 	if(pass == null){return}
 	
 	let userExists = await fetch(ROOT+"accountdetails?u=" + username)
@@ -79,6 +83,7 @@ async function logIn(){
 			
 			session = await (await fetch(ROOT + "initSession?u=" + username + "&p=" + pass)).json()
 			localStorage.session = session
+
 			
 			
 			switchTab(signedIn)
@@ -92,7 +97,7 @@ async function logIn(){
 	
 }
 async function signOut(){
-	await fetch(ROOT+"endSession?s="+sineEncrypt(session))
+	await fetch(ROOT+"endSession?s="+session)
 	session = -1
 	localStorage.removeItem("session")
 	switchTab(signedOut)
@@ -110,11 +115,11 @@ async function createGame(){
 	let pass = prompt("Please enter a password (leave blank for a public game)")
 	if(pass == null){return}
 	if(pass != ''){
-		pass = sineEncrypt(pass)
+		pass = pass
 	}
 	
 	await fetch(ROOT+"createGame?n=" + name + "&p=" + pass)
-    await fetch(ROOT+"joinGame?n=" + name + "&p=" + pass + "&s=" + sineEncrypt(session))
+    await fetch(ROOT+"joinGame?n=" + name + "&p=" + pass + "&s=" +session)
 	
 	switchTab(rps)
 	currentGame = name
@@ -134,10 +139,10 @@ async function joinGame(){
 	let pass = ''
 	if(!game.isPublic){
 		pass = prompt("Please enter game password")
-		pass = sineEncrypt(pass)
+		pass = pass
 	}
 	
-	await fetch(ROOT+"joinGame?n=" + gameName + "&p=" + pass + "&s=" + sineEncrypt(session))
+	await fetch(ROOT+"joinGame?n=" + gameName + "&p=" + pass + "&s=" + session)
 	
 	switchTab(rps)
 	currentGame = gameName
@@ -170,7 +175,7 @@ function rpsChoice(number){
 	rpsCurrentChoice.innerHTML = mapping[number]
 }
 async function rpsSubmit(){
-        await fetch(ROOT+"rpsSubmit?choice=" + choice + "&s=" + sineEncrypt(session) + "&g=" + currentGame)
+        await fetch(ROOT+"rpsSubmit?choice=" + choice + "&s=" + session + "&g=" + currentGame)
     rps0.disabled = true
     rps1.disabled = true
     rps2.disabled = true

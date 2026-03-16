@@ -102,7 +102,7 @@ app.get('/', async (req,res) => {
 app.get('/cardimg', async (req,res) => {
 	
 	// root/cardimg?name=<name>
-	let name = req.query["name"];
+	let name = req.query.name;
 	
 
 	res.sendFile(path.join(__dirname,"images",name))
@@ -111,14 +111,14 @@ app.get('/cardimg', async (req,res) => {
 
 
 app.get('/accountdetails', async (req,res) => {
-	let username = req.query["u"]
+	let username = req.query.u
     let userData = await getUsers()	
 	if(username in userData){res.send(true)}else{res.send(false)}
 })
 
 app.get('/signup',async (req,res) => {
-	let username = req.query["u"]
-	let pass = req.query["p"]
+	let username = req.query.u
+	let pass = sineEncrypt(req.query.p)
     
 	//fs.writeFileSync('./users.json', JSON.stringify(userData))
 	await redify('users',username,{
@@ -130,8 +130,8 @@ app.get('/signup',async (req,res) => {
 })
 
 app.get('/login',async (req,res) => {
-	let username = req.query["u"]
-	let pass = req.query["p"]
+	let username = req.query.u
+	let pass = sineEncrypt(req.query.p)
     let userData = await getUsers()
 	if(userData[username].pass == pass){
 		res.send(true)
@@ -141,8 +141,8 @@ app.get('/login',async (req,res) => {
 })
 
 app.get('/initSession',async (req,res) => {
-	let username = req.query["u"]
-	let pass = req.query["p"]
+	let username = req.query.u
+	let pass = sineEncrypt(req.query.p)
 	
 	let sessions = await getSessions()
 	
@@ -176,13 +176,22 @@ app.get('/sessionIDs',async (req,res) => {
     res.send(await getSessions())
 })
 app.get('/sessionData',async (req,res) => {
-    let s = req.query["s"]
+    let s = sineEncrypt(req.query.s)
 	let sessions = await getSessions()
 	
 	res.json(sessions[s])
 })
+app.get('/sessionExists',async (req,res) => {
+	let s = sineEncrypt(req.query.s)
+	let sessions = await getSessions()
+	if(s in sessions){
+		res.json(true)
+	}else{
+		res.json(false)
+	}
+})
 app.get('/endSession',async (req,res) => {
-    let s = req.query["s"]
+    let s = sineEncrypt(req.query.s)
 	await redis.hDel('sessions',s)
 	res.send("session "+s+" has been terminated.<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><sub>you monster</sub>")
 })
@@ -203,7 +212,7 @@ app.get('/games',async (req,res)=>{
 
 app.get('/createGame',async (req,res)=>{
 	let n = req.query.n
-	let p = req.query.p
+	let p = sineEncrypt(req.query.p)
 	
 	
 	let game = {
@@ -230,8 +239,8 @@ app.get('/deleteAllGames',async (req,res)=>{
 })
 app.get('/joinGame',async (req,res)=>{
     let gameName = req.query.n
-    let gamePass = req.query.p
-    let userSess = req.query.s
+    let gamePass = sineEncrypt(req.query.p)
+    let userSess = sineEncrypt(req.query.s)
 	//console.log(gameName,gamePass,userSess)
 
     let userData = await getUsers()
@@ -262,7 +271,7 @@ app.get('/joinGame',async (req,res)=>{
 
 app.get('/rpsSubmit',async (req,res)=>{
 	let choice = req.query.choice
-	let s = req.query.s
+	let s = sineEncrypt(req.query.s)
 	let g = req.query.g
 	
 	let game = await deredify('games',g)
