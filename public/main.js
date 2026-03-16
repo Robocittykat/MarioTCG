@@ -16,9 +16,13 @@ function switchTab(tab){
 
 
 async function sessionData(){
+	try{
 	let res = await fetch(ROOT+"sessionData?s="+sineEncrypt(session))
 	let data = await res.json()
 	return data
+	}catch(e){
+		alert("sessionData failed: "+e)
+	}
 }
 
 async function showCard(){
