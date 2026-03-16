@@ -41,6 +41,7 @@ async function logIn(){
 			session = localStorage.session
 			switchTab(signedIn)
 		    signedInUsernameLabel.innerHTML = (await sessionData()).u
+			sessionLabel.innerHTML = session
 			return
 		}else{
 			localStorage.removeItem("session")
@@ -66,6 +67,7 @@ async function logIn(){
 			
 			switchTab(signedIn)
 		    signedInUsernameLabel.innerHTML = (await sessionData()).u
+			sessionLabel.innerHTML = session
 		}
 	}else{
 		let res = await fetch(ROOT+"login?u="+username+"&p="+pass)
@@ -82,6 +84,7 @@ async function logIn(){
 			switchTab(signedIn)
 
 		    signedInUsernameLabel.innerHTML = (await sessionData()).u
+			sessionLabel.innerHTML = session
 		}
 	}
 	
