@@ -1,4 +1,4 @@
-const ROOT = document.URL.substring(0,document.URL.length-10)
+const ROOT = window.location.origin + "/"
 
 let session = -1
 let currentGame = -1
