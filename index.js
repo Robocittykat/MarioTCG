@@ -9,16 +9,38 @@ const app = express();
 const PORT = 3000;
 const __dirname = import.meta.dirname
 
-import { put } from '@vercel/blob';
-import { get } from '@vercel/blob'
-//import { PutBlobResult } from '@vercel/blob';
+import { createClient } from 'redis';
+const redis = createClient({ url: "redis://default:7Zu7u2E8Z3FVGVTH9owUbnqi3iyU63zp@redis-12054.c10.us-east-1-2.ec2.cloud.redislabs.com:12054" });
+await redis.connect();
 
-async function blobify(blobName,blobData){
-	const blob = await put(blobName, blobData, {access: 'private',token: "vercel_blob_rw_IPe82djrbfwUAuzA_MMVlp7DYVJBlNgJjGbcuHhwlYMrYCU",allowOverwrite:true})
+/*
+// Add a user
+await client.hSet("users", userId, JSON.stringify(userData));
+
+// Get one user
+const user = JSON.parse(await client.hGet("users", userId));
+
+// Get all users
+const allUsers = await client.hGetAll("users"); 
+// returns { userId1: '{"name":...}', userId2: '{"name":...}', ... }
+*/
+
+async function redify(obj,param,data){
+	await redis.hSet(obj,param,JSON.stringify(data))
 }
-async function unblobify(blobName){
-	let blob = await get(blobName, {access: "private", token: "vercel_blob_rw_IPe82djrbfwUAuzA_MMVlp7DYVJBlNgJjGbcuHhwlYMrYCU"})
-	return new Response(blob.stream).text()
+async function deredify(obj,param = null){
+	if(param == null){
+		const raw = await redis.hGetAll(obj);
+		return Object.fromEntries(Object.entries(raw).map(([k, v]) => [k, JSON.parse(v)]));
+	}
+	return JSON.parse(await redis.hGet(obj,param))
+}
+
+
+
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms))
 }
 
 // Serve frontend from public/
@@ -41,13 +63,16 @@ let sessions = {
 */
 
 async function getUsers(){
-	let theText = await unblobify('users.json')
-	return JSON.parse(theText)
+	return await deredify("users")
     //return JSON.parse(fs.readFileSync("./users.json"))
 }
+async function getGames(){
+	return await deredify("games")
+}
+async function getSessions(){
+	return await deredify("sessions")
+}
 
-let sessions = {}
-let games = {}
 
 
 app.get("/test", async (req,res) => {
@@ -60,8 +85,8 @@ app.listen(PORT, () => {
 
 
 app.get('/blobTest',async (req,res) => {
-	await blobify("test.txt","It's blobbin time")
-	const blobData = await unblobify("test.txt")
+	await redify("test","testParam","It's blobbin time")
+	const blobData = await deredify("test")
 	console.log(blobData)
 	res.json(blobData)
 })
@@ -95,15 +120,13 @@ app.get('/accountdetails', async (req,res) => {
 app.get('/signup',async (req,res) => {
 	let username = req.query["u"]
 	let pass = req.query["p"]
-    let userData = await getUsers()
-	
-	userData[username] = {
+    
+	//fs.writeFileSync('./users.json', JSON.stringify(userData))
+	await redify('users',username,{
 		"pass":pass,
 		"accountCreated":{"year":new Date().getFullYear(), "month":new Date().getMonth() + 1, "day":new Date().getDate()},
-	}
-	//fs.writeFileSync('./users.json', JSON.stringify(userData))
-	await blobify('users.json',JSON.stringify(userData))
-	res.json(userData[username])
+	})
+	res.json(await deredify('users',username))
 	return
 })
 
@@ -122,16 +145,21 @@ app.get('/initSession',async (req,res) => {
 	let username = req.query["u"]
 	let pass = req.query["p"]
 	
+	let sessions = await getSessions()
 	
-	let sessionID = Math.random()
+	
+	let sessionID = Math.random()+""
 	while(sessionID in sessions){
-		sessionID = Math.random()
+		sessionID = Math.random()+""
 	}
 	
-	sessions[sineEncrypt(sessionID+"")] = {u:username,p:pass,dateCreated:new Date().getTime()}
-	
-	
-	res.send(sessionID)
+	await redify('sessions',sineEncrypt(sessionID+""),{
+		u:username,
+		p:pass,
+		dateCreated:new Date().getTime()
+	})
+	console.log(typeof sessionID)
+	res.json(sessionID)
 })
 
 
@@ -141,17 +169,29 @@ app.get('/users', async (req,res) => {
 	res.json(usernames);
 });
 
+app.get('/deleteAllUsers', async (req,res) => {
+	await redis.del('users')
+	res.send("You Frankenstein's Monster")//listening to the audiobook while writing this
+})
+
 app.get('/sessionIDs',async (req,res) => {
-    res.send(sessions)
+    res.send(await getSessions())
 })
 app.get('/sessionData',async (req,res) => {
     let s = req.query["s"]
+	let sessions = await getSessions()
+	console.log(sessions)
+	console.log(s)
 	res.json(sessions[s])
 })
 app.get('/endSession',async (req,res) => {
     let s = req.query["s"]
-	delete sessions["s"]
+	await redis.hDel('sessions',s)
 	res.send("session "+s+" has been terminated.<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><sub>you monster</sub>")
+})
+app.get('/deleteAllSessions',async (req,res) => {
+	await redis.del('sessions')
+	res.send('You moster again')
 })
 
 
@@ -160,13 +200,14 @@ app.get('/cardnames', async (req,res) => {
 	res.json(cardnames);
 });
 app.get('/games',async (req,res)=>{
-    res.json(games)
+    res.json(await getGames())
 })
 
 
 app.get('/createGame',async (req,res)=>{
 	let n = req.query.n
 	let p = req.query.p
+	
 	
 	let game = {
 		pass: p,
@@ -180,14 +221,14 @@ app.get('/createGame',async (req,res)=>{
 		}
 	}
 	
-	games[n] = game
+	await redify('games',n,game)
 	
 	
 	res.json(true)
 	
 })
 app.get('/deleteAllGames',async (req,res)=>{
-	games = {}
+	await redis.del('games')
 	res.send("You monster.")
 })
 app.get('/joinGame',async (req,res)=>{
@@ -197,20 +238,23 @@ app.get('/joinGame',async (req,res)=>{
 	//console.log(gameName,gamePass,userSess)
 
     let userData = await getUsers()
+	let game = await deredify('games','gameName')
+	let sessions = await getSessions()
 	
-    if(games[gameName].pass != gamePass){
+    if(game.pass != gamePass){
 		res.json(false)
 		console.log("join failed; invalid password")
 		return
     }
 	
-	if(games[gameName].players.includes(sessions[userSess].u)){
+	if(game.players.includes(sessions[userSess].u)){
 		res.json(true)
 		return
 	}
 	
-    if(games[gameName].players.length < 2){
-		games[gameName].players = games[gameName].players.concat(sessions[userSess].u)
+    if(game.players.length < 2){
+		game.players = games[gameName].players.concat(sessions[userSess].u)
+		await redify('games',gameName,game)
 		res.json(true)
     }else{
 		res.json(false)
@@ -224,40 +268,44 @@ app.get('/rpsSubmit',async (req,res)=>{
 	let s = req.query.s
 	let g = req.query.g
 	
+	let game = await deredify('game',g)
+	let sessions = await getSessions()
 	
 	let user = sessions[s]
 	
-	let playerNumber = games[g].players.indexOf(user.u)
+	
+	
+	let playerNumber = game.players.indexOf(user.u)
 	switch(playerNumber){
 		case -1:
 			res.json("You aren't in this game!")
 			return
 			break
 		case 0:
-			games[g].playerData.p1Choice = choice
+			game.playerData.p1Choice = choice
 			break
 		case 1:
-			games[g].playerData.p2Choice = choice
+			game.playerData.p2Choice = choice
 			break
 	}
 	
-	let p1Choice = games[g].playerData.p1Choice
-	let p2Choice = games[g].playerData.p2Choice
+	let p1Choice = game.playerData.p1Choice
+	let p2Choice = game.playerData.p2Choice
 	
 	if((p1Choice != null) && (p2Choice != null)){
 		if(p1Choice == 0 && p2Choice == 2){
-			games[g].playerData.winner = games[g].players[0]
+			game.playerData.winner = game.players[0]
 		}else if(p1Choice == 2 && p2Choice == 0){
-			games[g].playerData.winner = games[g].players[1]
+			game.playerData.winner = game.players[1]
 		}else if(p1Choice > p2Choice){
-			games[g].playerData.winner = games[g].players[0]
+			game.playerData.winner = game.players[0]
 		}else if(p1Choice < p2Choice){
-			games[g].playerData.winner = games[g].players[1]
+			game.playerData.winner = game.players[1]
 		}else if(p1Choice == p2Choice){
-			games[g].playerData.winner = "tie"
+			game.playerData.winner = "tie"
 		}
 	}
-	
+	await redify('games',g,game)
 	
 	res.json(true)
 })
@@ -356,15 +404,18 @@ function sineEncrypt(input){ //I have no clue if this is a good way to do this
 }
 
 
-function deleteOldSessions(){
+async function deleteOldSessions(){
 
 	let currTime = new Date().getTime()
+	let sessions = await getSessions()
 	
-	let sessionsRemoved = false
+	
 	for(let i of Object.keys(sessions)){
 		if(currTime - sessions[i].dateCreated > 86400000){//sessions last for a day
 			delete sessions[i]
-			sessionsRemoved = true
+			await redis.hDel('sessions',i)
 		}
 	}
+	
+	
 }setInterval(deleteOldSessions,60000)//clear check every minute

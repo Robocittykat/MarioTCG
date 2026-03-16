@@ -16,7 +16,7 @@ function switchTab(tab){
 
 
 async function sessionData(){
-	let res = await fetch(ROOT+"sessionData?s="+sineEncrypt(session+""))
+	let res = await fetch(ROOT+"sessionData?s="+sineEncrypt(session))
 	let data = await res.json()
 	return data
 }
@@ -75,10 +75,13 @@ async function logIn(){
 		}else{
 			alert("signed in!")
 			
-			session = await (await fetch(ROOT + "initSession?u=" + username + "&p=" + pass)).text()
+			session = await (await fetch(ROOT + "initSession?u=" + username + "&p=" + pass)).json()
 			localStorage.session = session
 			
+			console.log((await (await fetch(ROOT + "sessionIDs")).json())[sineEncrypt(session)])
+			
 			switchTab(signedIn)
+			console.log(await sessionData())
 		    signedInUsernameLabel.innerHTML = (await sessionData()).u
 		}
 	}
