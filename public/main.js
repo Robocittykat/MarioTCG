@@ -152,6 +152,8 @@ async function joinGame(){
 
 
 async function updateGame(){
+	let user = await sessionData()
+	
 	let i = 1
 	for(let player of (await (await fetch(ROOT + "games")).json())[currentGame].players){
 		document.getElementById("rpsP"+i).innerHTML = player
@@ -162,6 +164,14 @@ async function updateGame(){
 	let winner = (await (await fetch(ROOT+"games")).json())[currentGame].playerData.winner
 	if(winner != null){
 		rpsWinner.innerHTML = "Winner: " + winner
+		if(user.u == winner){
+			reaction.src = ROOT+"cardimg?name=tfw_win"
+		}else if(winner == "tie"){
+			reaction.src = ROOT+"cardimg?name=tfw_tie"
+		}else{
+			reaction.src = ROOT+"cardimg?name=tfw_lose"
+		}
+		reaction.hidden = false
 	}
 	
 	
