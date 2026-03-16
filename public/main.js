@@ -78,10 +78,9 @@ async function logIn(){
 			session = await (await fetch(ROOT + "initSession?u=" + username + "&p=" + pass)).json()
 			localStorage.session = session
 			
-			console.log((await (await fetch(ROOT + "sessionIDs")).json())[sineEncrypt(session)])
 			
 			switchTab(signedIn)
-			console.log(await sessionData())
+
 		    signedInUsernameLabel.innerHTML = (await sessionData()).u
 		}
 	}
@@ -98,7 +97,7 @@ async function signOut(){
 
 async function createGame(){
 	let allGameNames = await (await fetch(ROOT+"games")).json()
-	console.log(allGameNames)
+
 	let name = prompt("Please enter the game name")
 	if(name == null){return}
 	while(name in allGameNames){

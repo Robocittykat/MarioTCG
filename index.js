@@ -87,7 +87,6 @@ app.listen(PORT, () => {
 app.get('/blobTest',async (req,res) => {
 	await redify("test","testParam","It's blobbin time")
 	const blobData = await deredify("test")
-	console.log(blobData)
 	res.json(blobData)
 })
 
@@ -158,7 +157,6 @@ app.get('/initSession',async (req,res) => {
 		p:pass,
 		dateCreated:new Date().getTime()
 	})
-	console.log(typeof sessionID)
 	res.json(sessionID)
 })
 
@@ -180,8 +178,7 @@ app.get('/sessionIDs',async (req,res) => {
 app.get('/sessionData',async (req,res) => {
     let s = req.query["s"]
 	let sessions = await getSessions()
-	console.log(sessions)
-	console.log(s)
+	
 	res.json(sessions[s])
 })
 app.get('/endSession',async (req,res) => {
@@ -238,7 +235,7 @@ app.get('/joinGame',async (req,res)=>{
 	//console.log(gameName,gamePass,userSess)
 
     let userData = await getUsers()
-	let game = await deredify('games','gameName')
+	let game = await deredify('games',gameName)
 	let sessions = await getSessions()
 	
     if(game.pass != gamePass){
@@ -253,7 +250,7 @@ app.get('/joinGame',async (req,res)=>{
 	}
 	
     if(game.players.length < 2){
-		game.players = games[gameName].players.concat(sessions[userSess].u)
+		game.players = game.players.concat(sessions[userSess].u)
 		await redify('games',gameName,game)
 		res.json(true)
     }else{
@@ -268,7 +265,7 @@ app.get('/rpsSubmit',async (req,res)=>{
 	let s = req.query.s
 	let g = req.query.g
 	
-	let game = await deredify('game',g)
+	let game = await deredify('games',g)
 	let sessions = await getSessions()
 	
 	let user = sessions[s]
