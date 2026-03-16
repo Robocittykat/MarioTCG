@@ -165,11 +165,11 @@ async function updateGame(){
 	if(winner != null){
 		rpsWinner.innerHTML = "Winner: " + winner
 		if(user.u == winner){
-			reaction.src = ROOT+"cardimg?name=tfw_win"
+			reaction.src = ROOT+"cardimg?name=tfw_win.png"
 		}else if(winner == "tie"){
-			reaction.src = ROOT+"cardimg?name=tfw_tie"
+			reaction.src = ROOT+"cardimg?name=tfw_tie.png"
 		}else{
-			reaction.src = ROOT+"cardimg?name=tfw_lose"
+			reaction.src = ROOT+"cardimg?name=tfw_lose.png"
 		}
 		reaction.hidden = false
 	}
