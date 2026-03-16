@@ -84,10 +84,7 @@ async function logIn(){
 			session = await (await fetch(ROOT + "initSession?u=" + username + "&p=" + pass)).json()
 			localStorage.session = session
 
-			alert("session: "+session)
-			alert("localStored session:"+localStorage.session)
-			alert("typeof session: "+(typeof session))
-			alert("match?: "+(session == localStorage.session))
+			
 			
 			switchTab(signedIn)
 
