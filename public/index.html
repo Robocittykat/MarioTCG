@@ -19,21 +19,39 @@
 	</div>
 	<div id="signedIn" hidden>
 		<h1>Let's-a-go, <span id="signedInUsernameLabel"></span>!</h1>
-		<button onclick="createGame()">New game</button>
+		<button onclick="createGame('RPS')">New Boulder-Angle-Flat game</button>
+		<button onclick="createGame('COW')">New Sheriff game</button>
 		<button onclick="joinGame()">Join game</button>
 		<button disabled>Edit deck</button>
 		<button disabled>Shop</button>
 		<button onclick="signOut()">Sign out</button><br>
 		<text>session: <span id="sessionLabel"></span></text>
 	</div>
-	<div id="rps" hidden>
-		<h1><span id="rpsP1"></span> vs. <span id="rpsP2"></span></h1>
-		<button id="rps0" onclick="rpsChoice(0)">boulder</button>
-		<button id="rps1" onclick="rpsChoice(1)">flat</button>
-		<button id="rps2" onclick="rpsChoice(2)">angle</button><br>
-		<text>Current choice: <span id="rpsCurrentChoice">rock</span></text><br>
-		<h1 id="rpsWinner"></h1>
-		<button id="submitButton" onclick="rpsSubmit()">Submit</button><br>
+	<div id="gameDiv" hidden>
+		<h1><span id="P1Label"></span> vs. <span id="P2Label"></span></h1>
+		
+		
+		<div id="RPS" hidden>
+			<button id="rps0" onclick="rpsChoice(0)">boulder</button>
+			<button id="rps1" onclick="rpsChoice(1)">flat</button>
+			<button id="rps2" onclick="rpsChoice(2)">angle</button><br>
+			<text>Current choice: <span id="rpsCurrentChoice">rock</span></text><br>
+			<button id="rpsSubmitButton" onclick="rpsSubmit()">Submit</button>
+		</div>
+		<div id="COW" hidden>
+			<text>You have <span id="cowBullets">0</span> bullets.</text><br>
+			<button id="cow0" onclick="cowChoice(0)">reload</button>
+			<button id="cow1" onclick="cowChoice(1)" disabled>shoot</button>
+			<button id="cow2" onclick="cowChoice(2)">shield</button><br>
+			<text>Current choice: <span id="cowCurrentChoice"></span></text><br>
+			<text>Opponent's last choice: <span id="cowOppChoice"></span></text><br>
+			<button id="cowSubmitButton" onclick="cowSubmit()" disabled>Submit</button>
+		</div>
+		
+		
+		<br>
+		<h1 id="gameWinner"></h1>
+		
 		<img id="reaction" hidden>
 	</div>
 	<!--

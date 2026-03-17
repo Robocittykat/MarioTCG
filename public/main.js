@@ -5,7 +5,9 @@ let currentGame = -1
 
 let inGame = false
 
-let choice = 0
+let localGameData = {
+	choice: -1
+}
 
 let currentTab = signedOut
 function switchTab(tab){
@@ -14,6 +16,12 @@ function switchTab(tab){
 	currentTab = tab
 }
 
+let gameTab = document.getElementById("RPS")
+function switchGame(tab){
+	gameTab.hidden = true
+	tab.hidden = false
+	gameTab = tab
+}
 
 async function sessionData(){
 	try{
@@ -103,7 +111,7 @@ async function signOut(){
 	switchTab(signedOut)
 }
 
-async function createGame(){
+async function createGame(type){
 	let allGameNames = await (await fetch(ROOT+"games")).json()
 
 	let name = prompt("Please enter the game name")
@@ -114,14 +122,13 @@ async function createGame(){
 	}
 	let pass = prompt("Please enter a password (leave blank for a public game)")
 	if(pass == null){return}
-	if(pass != ''){
-		pass = pass
-	}
 	
-	await fetch(ROOT+"createGame?n=" + name + "&p=" + pass)
+	
+	await fetch(ROOT+"create"+type+"Game?n=" + name + "&p=" + pass)
     await fetch(ROOT+"joinGame?n=" + name + "&p=" + pass + "&s=" +session)
 	
-	switchTab(rps)
+	switchTab(gameDiv)
+	switchGame(document.getElementById(type))
 	currentGame = name
 	inGame = true
 	updateGame()
@@ -144,7 +151,8 @@ async function joinGame(){
 	
 	await fetch(ROOT+"joinGame?n=" + gameName + "&p=" + pass + "&s=" + session)
 	
-	switchTab(rps)
+	switchTab(gameDiv)
+	switchGame(document.getElementById(game.gameType))
 	currentGame = gameName
 	inGame = true
 	updateGame()
@@ -153,17 +161,55 @@ async function joinGame(){
 
 async function updateGame(){
 	let user = await sessionData()
+	let game = await (await fetch(ROOT+"getGame?g="+currentGame)).json()
+	let player = game.gameData[user.u]
+	let opponent
+	for(let p of game.players){
+		if(p != user.u){
+			opponent = game.gameData[p]
+			break
+		}opponent = null
+	}
 	
 	let i = 1
-	for(let player of (await (await fetch(ROOT + "games")).json())[currentGame].players){
-		document.getElementById("rpsP"+i).innerHTML = player
+	for(let p of game.players){
+		document.getElementById("P"+i+"Label").innerHTML = p
 		i ++
+	}
+	if(opponent == null){
+		if(inGame){setTimeout(()=>updateGame(),5000)}
+		return
+	}
+	
+	switch(game.gameType){
+		case 'RPS':
+			break
+		case 'COW':
+			
+			cowBullets.innerHTML = player.bullets
+			if(player.submitted){
+				cow0.disabled = true
+				cow1.disabled = true
+				cow2.disabled = true
+				cowSubmitButton.disabled = true
+			}else{
+				cow0.disabled = false
+				if(player.bullets >= 1){
+					cow1.disabled = false
+				}else{cow1.disabled = true}
+				cow2.disabled = false
+				if(localGameData.choice != -1){
+					cowSubmitButton.disabled = false
+				}else{cowSubmitButton.disabled = true}
+			}
+			cowOppChoice.innerHTML = ["reload","shoot","shield"][opponent.lastChoice]
+			break
 	}
 	
 	
-	let winner = (await (await fetch(ROOT+"games")).json())[currentGame].playerData.winner
+	let winner = game.gameData.winner
 	if(winner != null){
-		rpsWinner.innerHTML = "Winner: " + winner
+		gameWinner.innerHTML = "Winner: " + winner
 		if(user.u == winner){
 			reaction.src = ROOT+"cardimg?name=tfw_win.png"
 		}else if(winner == "tie"){
@@ -172,24 +218,40 @@ async function updateGame(){
 			reaction.src = ROOT+"cardimg?name=tfw_lose.png"
 		}
 		reaction.hidden = false
+		inGame = false
 	}
 	
 	
 	
-	if(inGame){setTimeout(updateGame,5000)}
+	if(inGame){setTimeout(()=>updateGame(),5000)}
 }
 
 function rpsChoice(number){
 	let mapping = ["boulder","flat","angle"]
-	choice = number
+	localGameData.choice = number
 	rpsCurrentChoice.innerHTML = mapping[number]
 }
 async function rpsSubmit(){
-        await fetch(ROOT+"rpsSubmit?choice=" + choice + "&s=" + session + "&g=" + currentGame)
+    await fetch(ROOT+"rpsSubmit?choice=" + localGameData.choice + "&s=" + session + "&g=" + currentGame)
     rps0.disabled = true
     rps1.disabled = true
     rps2.disabled = true
-    submitButton.disabled = true
+    rpsSubmitButton.disabled = true
+}
+
+function cowChoice(number){
+	let mapping = ["reload","shoot","shield"]
+	localGameData.choice = number
+	cowCurrentChoice.innerHTML = mapping[number]
+	cowSubmitButton.disabled = false
+}
+async function cowSubmit(){
+	await fetch(ROOT+"cowSubmit?choice=" + localGameData.choice + "&s=" + session + "&g=" + currentGame)
+	cow0.disabled = true
+	cow1.disabled = true
+	cow2.disabled = true
+	cowSubmitButton.disabled = true
+	localGameData.choice = -1
 }
 
 

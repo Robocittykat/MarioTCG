@@ -191,7 +191,7 @@ app.get('/sessionExists',async (req,res) => {
 	}
 })
 app.get('/endSession',async (req,res) => {
-    let s = sineEncrypt(req.query.s)
+    let s = sineEncrypt(req.query.s)+""
 	await redis.hDel('sessions',s)
 	res.send("session "+s+" has been terminated.<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><sub>you monster</sub>")
 })
@@ -210,7 +210,7 @@ app.get('/games',async (req,res)=>{
 })
 
 
-app.get('/createGame',async (req,res)=>{
+app.get('/createRPSGame',async (req,res)=>{
 	let n = req.query.n
 	let p = sineEncrypt(req.query.p)
 	
@@ -220,7 +220,8 @@ app.get('/createGame',async (req,res)=>{
 		gameCreated: new Date().getTime(),
 		isPublic: p == '',
 		players: [],
-		playerData: {
+		gameType: "RPS",
+		gameData: {
 			p1Choice: null,
 			p2Choice: null,
 			winner: null
@@ -232,6 +233,27 @@ app.get('/createGame',async (req,res)=>{
 	
 	res.json(true)
 	
+})
+app.get('/createCOWGame',async (req,res) => {
+	
+	let n = req.query.n
+	let p = sineEncrypt(req.query.p)
+	
+	
+	let game = {
+		pass: p,
+		gameCreated: new Date().getTime(),
+		isPublic: p == '',
+		players: [],
+		gameType: "COW",
+		gameData: {
+			
+		}
+	}
+	
+	await redify('games',n,game)
+	
+	res.json(true)
 })
 app.get('/deleteAllGames',async (req,res)=>{
 	await redis.del('games')
@@ -254,18 +276,28 @@ app.get('/joinGame',async (req,res)=>{
     }
 	
 	if(game.players.includes(sessions[userSess].u)){
-		res.json(true)
+		res.json(game)
 		return
 	}
 	
     if(game.players.length < 2){
 		game.players = game.players.concat(sessions[userSess].u)
+		game.gameData[sessions[userSess].u] = {
+			bullets: 0,
+			submitted: false,
+			choice: -1,
+			lastChoice: -1,
+		}
 		await redify('games',gameName,game)
-		res.json(true)
+		res.json(game)
     }else{
 		res.json(false)
 		console.log("join failed; game is full")
     }
+})
+app.get('/getGame',async (req,res) => {
+	let gameName = req.query.g
+	res.json(await deredify('games',gameName))
 })
 
 
@@ -288,34 +320,81 @@ app.get('/rpsSubmit',async (req,res)=>{
 			return
 			break
 		case 0:
-			game.playerData.p1Choice = choice
+			game.gameData.p1Choice = choice
 			break
 		case 1:
-			game.playerData.p2Choice = choice
+			game.gameData.p2Choice = choice
 			break
 	}
 	
-	let p1Choice = game.playerData.p1Choice
-	let p2Choice = game.playerData.p2Choice
+	let p1Choice = game.gameData.p1Choice
+	let p2Choice = game.gameData.p2Choice
 	
 	if((p1Choice != null) && (p2Choice != null)){
 		if(p1Choice == 0 && p2Choice == 2){
-			game.playerData.winner = game.players[0]
+			game.gameData.winner = game.players[0]
 		}else if(p1Choice == 2 && p2Choice == 0){
-			game.playerData.winner = game.players[1]
+			game.gameData.winner = game.players[1]
 		}else if(p1Choice > p2Choice){
-			game.playerData.winner = game.players[0]
+			game.gameData.winner = game.players[0]
 		}else if(p1Choice < p2Choice){
-			game.playerData.winner = game.players[1]
+			game.gameData.winner = game.players[1]
 		}else if(p1Choice == p2Choice){
-			game.playerData.winner = "tie"
+			game.gameData.winner = "tie"
 		}
 	}
 	await redify('games',g,game)
 	
 	res.json(true)
 })
-
+app.get('/cowSubmit',async (req,res) => {
+	let choice = req.query.choice
+	let s = sineEncrypt(req.query.s)
+	let g = req.query.g
+	
+	let game = await deredify('games',g)
+	let sessions = await getSessions()
+	
+	let user = sessions[s]
+	
+	
+	
+	game.gameData[user.u].choice = choice
+	game.gameData[user.u].submitted = true
+	
+	let p1 = game.gameData[game.players[0]]
+	let p2 = game.gameData[game.players[1]]
+	
+	if((p1.submitted == true) && (p2.submitted == true)){
+		if(p1.choice == 1 && p2.choice == 0){
+			game.gameData.winner = game.players[0]
+		}else if(p1.choice == 0 && p2.choice == 1){
+			game.gameData.winner = game.players[1]
+		}else if(p1.choice == 1 && p2.choice == 1){
+			game.gameData.winner = "tie"
+		}else{
+			if(p1.choice == 0){
+				p1.bullets ++
+			}if(p1.choice == 1){
+				p1.bullets --
+			}if(p2.choice == 0){
+				p2.bullets ++
+			}if(p2.choice == 1){
+				p2.bullets --
+			}
+		}
+		p1.lastChoice = p1.choice
+		p1.choice = -1
+		p1.submitted = false
+		p2.lastChoice = p2.choice
+		p2.choice = -1
+		p2.submitted = false
+	}
+	
+	await redify('games',g,game)
+	
+	res.json(true)
+})
 
 
 /*
