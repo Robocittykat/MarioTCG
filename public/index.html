@@ -21,6 +21,7 @@
 		<h1>Let's-a-go, <span id="signedInUsernameLabel"></span>!</h1>
 		<button onclick="createGame('RPS')">New Boulder-Angle-Flat game</button>
 		<button onclick="createGame('COW')">New Sheriff game</button>
+		<button onclick="createGame('MARIO')">New Mario game</button>
 		<button onclick="joinGame()">Join game</button>
 		<button disabled>Edit deck</button>
 		<button disabled>Shop</button>
@@ -47,8 +48,14 @@
 			<text>Opponent's last choice: <span id="cowOppChoice"></span></text><br>
 			<button id="cowSubmitButton" onclick="cowSubmit()" disabled>Submit</button>
 		</div>
-		
-		
+		<div id="MARIO">
+			<div id="marioOppItems"></div>
+			<div id="marioOppHand"></div>
+			<div id="marioOppQueue"></div>
+			<div id="marioQueue"></div>
+			<div id="marioHand"></div>
+			<div id="marioItems"></div>
+		</div>
 		<br>
 		<h1 id="gameWinner"></h1>
 		
