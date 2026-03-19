@@ -166,7 +166,10 @@ app.get('/users', async (req,res) => {
     let usernames = await getUsers()
 	res.json(usernames);
 });
-
+app.get('/deleteUser', async (req,res) => {
+	await redis.hDel('users',req.query.callingItThisToPreventTerrorism)
+	res.send("Wow. You killed them. Just wow. " + req.query.callingItThisToPreventTerrorism + " is dead all because of you. Are you happy with yourself?")
+})
 app.get('/deleteAllUsers', async (req,res) => {
 	await redis.del('users')
 	res.send("You Frankenstein's Monster")//listening to the audiobook while writing this
@@ -389,6 +392,10 @@ app.get('/cowSubmit',async (req,res) => {
 		p2.lastChoice = p2.choice
 		p2.choice = -1
 		p2.submitted = false
+	}
+	
+	if(game.gameData.winner != null){
+		setTimeout(async ()=>{await redis.hDel('games',g)},60000)
 	}
 	
 	await redify('games',g,game)
