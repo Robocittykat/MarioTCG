@@ -55,3 +55,8 @@ hr{
 	margin-top: 10px;
 	margin-bottom: 10px;
 }
+
+.cardContainer{
+	/*width: 100vw;*/
+	height: 10vh;
+}

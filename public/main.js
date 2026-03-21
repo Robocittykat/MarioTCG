@@ -204,6 +204,11 @@ async function updateGame(){
 			}
 			cowOppChoice.innerHTML = ["reload","shoot","shield"][opponent.lastChoice]
 			break
+		case 'MARIO':
+			marioQueue.innerHTML = ""
+			for(let card of player.queue){
+				marioQueue.innerHTML += "<img src='" + card.img + "' class='gameCard'>"
+			}
 	}
 	
 	

@@ -12,7 +12,7 @@
 	
 	<text id="thingy"></text>
 
-	<div id="signedOut">
+	<div id="signedOut" hidden>
 		<button onclick="logIn()">log in/sign up</button><br>
 		<img id="demoCard" src="/cardimg?name=card_back.png"><br>
 		<button onclick="newCard()">New card</button>
@@ -21,13 +21,14 @@
 		<h1>Let's-a-go, <span id="signedInUsernameLabel"></span>!</h1>
 		<button onclick="createGame('RPS')">New Boulder-Angle-Flat game</button>
 		<button onclick="createGame('COW')">New Sheriff game</button>
+		<button onclick="createGame('MARIO')">New Mario game</button>
 		<button onclick="joinGame()">Join game</button>
 		<button disabled>Edit deck</button>
 		<button disabled>Shop</button>
 		<button onclick="signOut()">Sign out</button><br>
 		<text>session: <span id="sessionLabel"></span></text>
 	</div>
-	<div id="gameDiv" hidden>
+	<div id="gameDiv">
 		<h1><span id="P1Label"></span> vs. <span id="P2Label"></span></h1>
 		
 		
@@ -47,8 +48,26 @@
 			<text>Opponent's last choice: <span id="cowOppChoice"></span></text><br>
 			<button id="cowSubmitButton" onclick="cowSubmit()" disabled>Submit</button>
 		</div>
-		
-		
+		<div id="MARIO">
+			<div id="marioOppItems" class="cardContainer">
+				<img src="/cardimg?name=coin.png" class="gameCard">
+			</div>
+			<div id="marioOppHand" class="cardContainer">
+				<img src="/cardimg?name=card_back.png" class="gameCard">
+			</div>
+			<div id="marioOppQueue" class="cardContainer">
+				<img src="/cardimg?name=little_goomba.png" class="gameCard">
+			</div>
+			<div id="marioQueue" class="cardContainer">
+				<img src="/cardimg?name=little_goomba.png" class="gameCard">
+			</div>
+			<div id="marioHand" class="cardContainer">
+				<img src="/cardimg?name=little_goomba.png" class="gameCard">
+			</div>
+			<div id="marioItems" class="cardContainer">
+				<img src="/cardimg?name=1-up.png" class="gameCard">
+			</div>
+		</div>
 		<br>
 		<h1 id="gameWinner"></h1>
 		

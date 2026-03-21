@@ -2,9 +2,7 @@ import express from "express"
 import * as path from "path"
 import * as fs from "fs"
 
-/*const express = require("express");
-const path = require("path");
-const fs = require("fs");*/
+
 const app = express();
 const PORT = 3000;
 const __dirname = import.meta.dirname
@@ -90,7 +88,6 @@ app.get('/blobTest',async (req,res) => {
 	res.json(blobData)
 })
 
-//carded jumping man
 
 
 /*
@@ -285,12 +282,21 @@ app.get('/joinGame',async (req,res)=>{
 	
     if(game.players.length < 2){
 		game.players = game.players.concat(sessions[userSess].u)
-		game.gameData[sessions[userSess].u] = {
-			bullets: 0,
-			submitted: false,
-			choice: -1,
-			lastChoice: -1,
+		switch(game.type){
+			case "COW":
+				game.gameData[sessions[userSess].u] = {
+					bullets: 0,
+					submitted: false,
+					choice: -1,
+					lastChoice: -1,
+				}
+				break
+			case "MARIO":
+				game.gameData[sessions[userSess].u] = {
+					queue: [card("little_goomba")]
+				}
 		}
+		
 		await redify('games',gameName,game)
 		res.json(game)
     }else{
@@ -477,8 +483,177 @@ function newDeck(){
 */
 
 
-
-
+function CARD(name){
+	let card = defaultCARD()
+	switch(name){
+		//prototypes (base types, ignoring renames or variants)
+		case "goomba":
+			card.name = "goomba"
+			card.proto = "goomba"
+			card.type = "e"
+			break
+		case "koopa_troopa":
+			card.name = "koopa_troopa"
+			card.proto = "koopa_troopa"
+			card.type = "e"
+			card.traits.grabbable = true
+			card.onThrow = 1 //kill consecutive enemies, become enemy at start of queue
+			break
+		case "red_koopa":
+			card.name = "red_koopa"
+			card.proto = "red_koopa"
+			card.type = "e"
+			card.traits.grabbable = true
+			card.onJump = 0 //replace at end of queue
+			card.onThrow = 1 //kill consecutive enemies, become enemy at start of queue
+			break
+		case "parakoopa":
+			card.name = "parakoopa"
+			card.proto = "parakoopa"
+			card.type = "e"
+			card.traits.easily_avoidable = true
+			card.onStomp = 100 //spawn koopa in place
+			break
+		case "buzzy_beetle":
+			card.name = "buzzy_beetle"
+			card.proto = "buzzy_beetle"
+			card.type = "e"
+			card.traits.fireproof = true
+			card.traits.grabbable = true
+			card.onThrow = 1 //kill consecutive enemies, become enemy at start of queue
+			break
+		case "piranha_plant":
+			card.name = "piranha_plant"
+			card.proto = "piranha_plant"
+			card.type = "e"
+			card.allowedParents = ["pipe"]
+			card.traits.unstompable = true
+			break
+		case "bullet_bill":
+			card.name = "bullet_bill"
+			card.proto = "bullet_bill"
+			card.type = "e"
+			card.isAux = true
+			card.traits.easily_avoidable = true
+			card.traits.fireproof = true
+			card.passive.turnStart = 0 //move forward
+			break
+		case "bullet_bill_cannon":
+			card.name = "bullet_bill_cannon"
+			card.proto = "bullet_bill_cannon"
+			card.type = "o"
+			card.passive.turnStart = 101 //spawn bullet bill
+			break
+		case "pipe":
+			card.name = "pipe"
+			card.proto = "pipe"
+			card.type = "o"
+			card.onEncounter = 103 //pipe stuff
+			break
+		case "question_block":
+			card.name = "question_block"
+			card.proto = "question_block"
+			card.type = "o"
+			card.onEncounter = 104 //? block stuff
+			break
+		case "brick_block":
+			card.name = "brick_block"
+			card.proto = "brick_block"
+			card.type = "o"
+			card.onEncounter = 105 //brick block stuff
+			break
+		case "hidden_block":
+			card.name = "hidden_block"
+			card.proto = "hidden_block"
+			card.type = "o"
+			card.onEncounter = 106 //hidden block stuff
+			break
+		case "bottomless_pit":
+			card.name = "bottomless_pit"
+			card.proto = "bottomless_pit"
+			card.type = "o"
+			card.onEncounter = 107 //bottomless pit stuff
+			break
+		case "checkpoint":
+			card.name = "checkpoint"
+			card.proto = "checkpoint"
+			card.type = "s"
+			card.onEncounter = 0 //checkpoint
+			break
+		case "flagpole":
+			card.name = "flagpole"
+			card.proto = "flagpole"
+			card.type = "s"
+			card.onEncounter = 1 //you win!
+			break
+		case "1-up":
+			card.name = "1-up"
+			card.proto = "1-up"
+			card.type = "i"
+			break
+		case "super_mushroom":
+			card.name = "super_mushroom"
+			card.proto = "super_mushroom"
+			card.type = "i"
+			break
+		case "fire_flower":
+			card.name = "fire_flower"
+			card.proto = "fire_flower"
+			card.type = "i"
+			card.passive.encounter = 0 //fire flower stuff
+			break
+		case "super_star":
+			card.name = "super_star"
+			card.proto = "super_star"
+			card.type = "i"
+			card.passive.encounter = 108 //instakill enemies
+			card.passive.endTurn = 99 //remove at end of turn
+			break
+		case "coin":
+			card.name = "coin"
+			card.proto = "coin"
+			card.type = "i"
+			break
+	}
+}
+function defaultCARD(){
+	return {
+		name: "",
+		proto: "",
+		img: "/cardimg?name=",
+		pile: [],
+		allowedParents: [""],
+		altPlaceRestriction: null,
+		type: null,
+		grabbed: false,
+		traits: {
+			unstompable: false,
+			easily_avoidable: false,
+			difficult: false,
+			fireproof: false,
+			grabbable: false,
+			boss: false,
+			miniboss: false,
+		},
+		rollMod: 0,
+		onStomp: null,
+		onJump: null,
+		onHurt: null,
+		onEncounter: null, //applies before battle
+		passive:{
+			turnStart: null,
+			stomp: null,
+			encounter: null,
+			ten_coins: null,
+			jump: null,
+			damage: null,
+			resolvePhase: null,
+			endTurn: null,
+		},
+		onThrow: 0, //kill first enemy
+		isAux: false,
+	}
+}
 
 
 
