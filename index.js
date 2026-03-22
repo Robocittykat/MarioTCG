@@ -255,6 +255,23 @@ app.get('/createCOWGame',async (req,res) => {
 	
 	res.json(true)
 })
+app.get('/createMARIOGame',async (req,res) => {
+    let n = req.query.n
+    let p = sineEncrypt(req.query.p)
+
+    let game = {
+	pass: p,
+	gameCreated: new Date().getTime(),
+	isPublic: p == '',
+	players: [],
+	gameType: "MARIO",
+	gameData: {
+
+	}
+    }
+    await redify('games',n,game)
+    res.json(true)
+})
 app.get('/deleteAllGames',async (req,res)=>{
 	await redis.del('games')
 	res.send("You monster.")
@@ -293,8 +310,11 @@ app.get('/joinGame',async (req,res)=>{
 				break
 			case "MARIO":
 				game.gameData[sessions[userSess].u] = {
-					queue: [card("little_goomba")]
+				    queue: [card("brick_block_smb1")],
+				    deck: [],
+				    hand: [card("little_goomba_smb1"),card("question_block_smb1"],
 				}
+		                break
 		}
 		
 		await redify('games',gameName,game)
