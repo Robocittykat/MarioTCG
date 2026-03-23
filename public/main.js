@@ -205,10 +205,25 @@ async function updateGame(){
 			cowOppChoice.innerHTML = ["reload","shoot","shield"][opponent.lastChoice]
 			break
 		case 'MARIO':
-			marioQueue.innerHTML = ""
-			for(let card of player.queue){
-				marioQueue.innerHTML += "<img src='" + card.img + "' class='gameCard'>"
+			let cardDivs = [marioOppItems,marioOppQueue,marioQueue,marioHand,marioItems]
+			let cardLists = [opponent.items,opponent.queue,player.queue,player.hand,player.items]
+			for(let div in cardDivs){
+				let newData = ""
+				for(let card of cardLists[div]){
+					newData += '<img src="' + card.img + '" class="gameCard">'
+				}
+				if(cardDivs[div].innerHTML != newData){
+					cardDivs[div].innerHTML = newData
+				}
 			}
+			let newData = ""
+			for(let card of opponent.hand){
+				newData += '<img src="/cardimg?name=card_back.png" class="gameCard">'
+			}
+			if(marioOppHand.innerHTML != newData){
+				marioOppHand.innerHTML = newData
+			}
+			
 	}
 	
 	

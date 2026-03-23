@@ -260,14 +260,14 @@ app.get('/createMARIOGame',async (req,res) => {
     let p = sineEncrypt(req.query.p)
 
     let game = {
-	pass: p,
-	gameCreated: new Date().getTime(),
-	isPublic: p == '',
-	players: [],
-	gameType: "MARIO",
-	gameData: {
+		pass: p,
+		gameCreated: new Date().getTime(),
+		isPublic: p == '',
+		players: [],
+		gameType: "MARIO",
+		gameData: {
 
-	}
+		}
     }
     await redify('games',n,game)
     res.json(true)
@@ -299,7 +299,7 @@ app.get('/joinGame',async (req,res)=>{
 	
     if(game.players.length < 2){
 		game.players = game.players.concat(sessions[userSess].u)
-		switch(game.type){
+		switch(game.gameType){
 			case "COW":
 				game.gameData[sessions[userSess].u] = {
 					bullets: 0,
@@ -310,9 +310,10 @@ app.get('/joinGame',async (req,res)=>{
 				break
 			case "MARIO":
 				game.gameData[sessions[userSess].u] = {
-				    queue: [card("brick_block_smb1")],
+				    queue: [CARD("brick_block_smb1"),CARD("bottomless_pit_smb1")],
 				    deck: [],
-				    hand: [card("little_goomba_smb1"),card("question_block_smb1"],
+				    hand: [CARD("little_goomba_smb1"),CARD("question_block_smb1")],
+					items: [CARD("coin_smb1")]
 				}
 		                break
 		}
@@ -639,7 +640,7 @@ function CARD(name){
 			card = CARD("bullet_bill")
 			break
 		case "bullet_bill_cannon_smb1":
-			card = CARD("bullet_bill_cannon"):
+			card = CARD("bullet_bill_cannon")
 			break
 		case "pipe_smb1":
 			card = CARD("pipe")
@@ -678,10 +679,10 @@ function CARD(name){
 			card = CARD("coin")
 			break
 	}
-	
 	card.name = name
-	card.img += name + ".png"
-}
+	card.img = "/cardimg?name=" + name + ".png"
+	return card
+}CARD("little_goomba_smb1")
 function defaultCARD(){
 	return {
 		name: "",

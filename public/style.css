@@ -8,7 +8,7 @@ body{
 }
 
 .gameCard{
-	width: 8vw;
+	height: 15vh;
 	margin: 0;
 	padding: 0;
 	display: inline-block;
@@ -38,9 +38,8 @@ body{
 	left: calc(92% - 8px)
 }
 
-#opponentGameArea{
+.opp{
 	transform: rotateZ(180deg);
-	margin-bottom: 0;
 }
 #userGameArea{
 	width: calc(100vw-8px)
@@ -58,5 +57,5 @@ hr{
 
 .cardContainer{
 	/*width: 100vw;*/
-	height: 10vh;
+	height: 15vh;
 }
