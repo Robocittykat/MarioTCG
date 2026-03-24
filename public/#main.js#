@@ -220,7 +220,7 @@ async function updateGame(){
 		let displayedLists = [[],[],[],[],[]]
 		try{
 			displayedLists = [displayedOpponent.items,displayedOpponent.queue,displayedPlayer.queue,displayedPlayer.hand,displayedPlayer.items]
-		}catch(e){}
+		}catch(e){}//first pass of updateGame will have currentlyDisplayed undefined, thus displayedOpponent and displayedPlayer undefined, so default empty lists
 		for(let div in cardDivs){
 			if(JSON.stringify(cardLists[div]) == JSON.stringify(displayedLists[div])){
 				continue

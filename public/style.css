@@ -59,3 +59,7 @@ hr{
 	/*width: 100vw;*/
 	height: 15vh;
 }
+
+.selected{
+    transform: translateY(-20px);
+}

@@ -192,7 +192,7 @@ app.get('/sessionExists',async (req,res) => {
 })
 app.get('/endSession',async (req,res) => {
     let s = sineEncrypt(req.query.s)+""
-	await redis.hDel('sessions',s)
+	//await redis.hDel('sessions',s)
 	res.send("session "+s+" has been terminated.<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><sub>you monster</sub>")
 })
 app.get('/deleteAllSessions',async (req,res) => {
@@ -312,7 +312,7 @@ app.get('/joinGame',async (req,res)=>{
 				game.gameData[sessions[userSess].u] = {
 				    queue: [CARD("brick_block_smb1"),CARD("bottomless_pit_smb1")],
 				    deck: [],
-				    hand: [CARD("little_goomba_smb1"),CARD("question_block_smb1")],
+				    hand: [CARD("little_goomba_smb1"),CARD("question_block_smb1"),CARD("koopa_troopa_smb1"),CARD("bullet_bill_cannon_smb1")],
 					items: [CARD("coin_smb1")]
 				}
 		                break
@@ -721,6 +721,58 @@ function defaultCARD(){
 		isAux: false,
 	}
 }
+
+
+
+app.get("/deckify", (req,res) => {
+	let username = req.query.u
+	let user = (await getUsers())[username]
+	user.deck = [
+		"question_block_smb1",
+		"question_block_smb1",
+		"question_block_smb1",
+		"question_block_smb1",
+		"question_block_smb1",
+		"brick_block_smb1",
+		"brick_block_smb1",
+		"brick_block_smb1",
+		"brick_block_smb1",
+		"brick_block_smb1",
+		"brick_block_smb1",
+		"brick_block_smb1",
+		"hidden_block_smb1",
+		"pipe_smb1",
+		"pipe_smb1",
+		"pipe_smb1",
+		"pipe_smb1",
+		"bottomless_pit_smb1",
+		"bottomless_pit_smb1",
+		"bottomless_pit_smb1",
+		"bottomless_pit_smb1",
+		"bullet_bill_cannon_smb1",
+		"little_goomba_smb1",
+		"little_goomba_smb1",
+		"little_goomba_smb1",
+		"little_goomba_smb1",
+		"little_goomba_smb1",
+		"little_goomba_smb1",
+		"little_goomba_smb1",
+		"little_goomba_smb1",
+		"koopa_troopa_smb1",
+		"koopa_troopa_smb1",
+		"koopa_troopa_smb1",
+		"koopa_troopa_smb1",
+		"red_koopa_smb1",
+		"red_koopa_smb1",
+		"parakoopa_smb1",
+		"piranha_plant_smb1",
+		"piranha_plant_smb1",
+		"buzzy_beetle_smb1",
+	]
+	await redify("users","req.query.u",)
+
+
+
 
 
 
