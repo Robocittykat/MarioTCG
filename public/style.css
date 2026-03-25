@@ -8,7 +8,7 @@ body{
 }
 
 .gameCard{
-	height: 15vh;
+	height: 100%;
 	margin: 0;
 	padding: 0;
 	display: inline-block;
@@ -58,6 +58,9 @@ hr{
 .cardContainer{
 	/*width: 100vw;*/
 	height: 15vh;
+	text-wrap: nowrap;
+	overflow-x: auto;
+	overflow-y: hidden;
 }
 
 .selected{

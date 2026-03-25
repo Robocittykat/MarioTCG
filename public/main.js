@@ -166,7 +166,7 @@ async function joinGame(){
 }
 
 
-async function updateGame(){
+async function updateGame(recurse = true){
     let user = await sessionData()
     let game = await (await fetch(ROOT+"getGame?g="+currentGame)).json()
     let player = game.gameData[user.u]
@@ -187,7 +187,7 @@ async function updateGame(){
 		i ++
     }
     if(opponent == null){
-		if(inGame){setTimeout(()=>updateGame(),5000)}
+		if(inGame && recurse){setTimeout(()=>updateGame(),5000)}
 		return
     }
     
@@ -261,7 +261,7 @@ async function updateGame(){
     
     
     
-    if(inGame){setTimeout(()=>updateGame(),5000)}
+    if(inGame && recurse){setTimeout(()=>updateGame(),5000)}
 }
 
 function rpsChoice(number){
@@ -318,7 +318,16 @@ async function cardChoice(elem){
     }
     
 }
-
+async function marioPlay(who){
+	await fetch(ROOT+"marioPlay?choice=" + localGameData.mario.cardsChosen.join("&choice=") + "&who=" + who + "&s=" + session + "&g=" + currentGame)
+	localGameData.mario = {
+		cardsChosen: [],
+		typeChosen: null,
+		playerChosen: null,
+		
+    }
+	updateGame(false)
+}
 
 
 

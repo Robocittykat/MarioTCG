@@ -309,11 +309,12 @@ app.get('/joinGame',async (req,res)=>{
 				}
 				break
 			case "MARIO":
+				let shuffledDeck = shuffle((await getUsers())[sessions[userSess].u].deck)
 				game.gameData[sessions[userSess].u] = {
-				    queue: [CARD("brick_block_smb1"),CARD("bottomless_pit_smb1")],
-				    deck: [],
-				    hand: [CARD("little_goomba_smb1"),CARD("question_block_smb1"),CARD("koopa_troopa_smb1"),CARD("bullet_bill_cannon_smb1")],
-					items: [CARD("coin_smb1")]
+				    queue: [CARD(shuffledDeck.pop()),CARD(shuffledDeck.pop()),CARD(shuffledDeck.pop()),CARD(shuffledDeck.pop()),CARD(shuffledDeck.pop()),],
+				    deck: shuffledDeck,
+				    hand: [CARD(shuffledDeck.pop()),CARD(shuffledDeck.pop()),CARD(shuffledDeck.pop()),CARD(shuffledDeck.pop()),CARD(shuffledDeck.pop()),],
+					items: []
 				}
 		                break
 		}
@@ -429,79 +430,40 @@ app.get('/cowSubmit',async (req,res) => {
 	
 	res.json(true)
 })
+app.get('/marioPlay',async (req,res) => {
+	let choice = req.query.choice
+	console.log(choice)
+	let who = req.query.who
+	let s = sineEncrypt(req.query.s)
+	let g = req.query.g
+	
+	let game = await deredify('games',g)
+	let sessions = await getSessions()
+	
+	let user = sessions[s]
+	let opponent = null
+	for(let p of game.players){
+		if(p != user.u){
+			opponent = p
+			break
+		}
+	}
+	
+	for(let card of choice){
+		if(who == 0){
+			game.gameData[user.u].queue = game.gameData[user.u].queue.concat(game.gameData[user.u].hand[card])
+		}else if(who == 1){
+			game.gameData[opponent].queue = game.gameData[opponent].queue.concat(game.gameData[user.u].hand[card])
+		}
+		game.gameData[user.u].hand.splice(card,1)
+	}
+	
+	
+	await redify('games',g,game)
+	
+	res.json(true)
+})
 
-
-/*
-
-
-
-
-
-function newPlayerObject(user){
-	return {name:user,
-			gameCoins:0,
-			deck:[],
-			discard:[],
-			hand:[],
-			lives:3,
-			queue:[],
-			powerUp:"none",
-			hasStar:false}
-}
-
-
-
-
-function newDeck(){
-	return [
-		"hidden_block",
-		"bullet_bill_cannon",
-		"bullet_bill_cannon",
-		"koopa_troopa",
-		"koopa_troopa",
-		"koopa_troopa",
-		"koopa_troopa",
-		"buzzy_beetle",
-		"red_koopa",
-		"red_koopa",
-		"parakoopa",
-		"piranha_plant",
-		"pipe",
-		"pipe",
-		"pipe",
-		"pipe",
-		"goomba",
-		"goomba",
-		"goomba",
-		"goomba",
-		"goomba",
-		"goomba",
-		"goomba",
-		"goomba",
-		"question_block",
-		"question_block",
-		"question_block",
-		"question_block",
-		"question_block",
-		"brick_block",
-		"brick_block",
-		"brick_block",
-		"brick_block",
-		"brick_block",
-		"brick_block",
-		"brick_block",
-		"bottomless_pit",
-		"bottomless_pit",
-		"bottomless_pit",
-		"bottomless_pit",
-
-	]
-}
-
-
-
-
-*/
 
 
 function CARD(name){
@@ -724,53 +686,59 @@ function defaultCARD(){
 
 
 
-app.get("/deckify", (req,res) => {
+app.get("/deckify", async (req,res) => {
 	let username = req.query.u
 	let user = (await getUsers())[username]
-	user.deck = [
-		"question_block_smb1",
-		"question_block_smb1",
-		"question_block_smb1",
-		"question_block_smb1",
-		"question_block_smb1",
-		"brick_block_smb1",
-		"brick_block_smb1",
-		"brick_block_smb1",
-		"brick_block_smb1",
-		"brick_block_smb1",
-		"brick_block_smb1",
-		"brick_block_smb1",
-		"hidden_block_smb1",
-		"pipe_smb1",
-		"pipe_smb1",
-		"pipe_smb1",
-		"pipe_smb1",
-		"bottomless_pit_smb1",
-		"bottomless_pit_smb1",
-		"bottomless_pit_smb1",
-		"bottomless_pit_smb1",
-		"bullet_bill_cannon_smb1",
-		"little_goomba_smb1",
-		"little_goomba_smb1",
-		"little_goomba_smb1",
-		"little_goomba_smb1",
-		"little_goomba_smb1",
-		"little_goomba_smb1",
-		"little_goomba_smb1",
-		"little_goomba_smb1",
-		"koopa_troopa_smb1",
-		"koopa_troopa_smb1",
-		"koopa_troopa_smb1",
-		"koopa_troopa_smb1",
-		"red_koopa_smb1",
-		"red_koopa_smb1",
-		"parakoopa_smb1",
-		"piranha_plant_smb1",
-		"piranha_plant_smb1",
-		"buzzy_beetle_smb1",
-	]
-	await redify("users","req.query.u",)
-
+	if(user.deck == undefined){
+		user.deck = [
+			"question_block_smb1",
+			"question_block_smb1",
+			"question_block_smb1",
+			"question_block_smb1",
+			"question_block_smb1",
+			"brick_block_smb1",
+			"brick_block_smb1",
+			"brick_block_smb1",
+			"brick_block_smb1",
+			"brick_block_smb1",
+			"brick_block_smb1",
+			"brick_block_smb1",
+			"hidden_block_smb1",
+			"pipe_smb1",
+			"pipe_smb1",
+			"pipe_smb1",
+			"pipe_smb1",
+			"bottomless_pit_smb1",
+			"bottomless_pit_smb1",
+			"bottomless_pit_smb1",
+			"bottomless_pit_smb1",
+			"bullet_bill_cannon_smb1",
+			"little_goomba_smb1",
+			"little_goomba_smb1",
+			"little_goomba_smb1",
+			"little_goomba_smb1",
+			"little_goomba_smb1",
+			"little_goomba_smb1",
+			"little_goomba_smb1",
+			"little_goomba_smb1",
+			"koopa_troopa_smb1",
+			"koopa_troopa_smb1",
+			"koopa_troopa_smb1",
+			"koopa_troopa_smb1",
+			"red_koopa_smb1",
+			"red_koopa_smb1",
+			"parakoopa_smb1",
+			"piranha_plant_smb1",
+			"piranha_plant_smb1",
+			"buzzy_beetle_smb1",
+		]
+	}if(user.benchedCards == undefined){
+		user.benchedCards = {} //cards you own but aren't in the deck. stored as little_goomba_smb1: 1. undefined means 0.
+	}
+	
+	await redify("users",username,user)
+	res.json(user)
+})
 
 
 
@@ -805,3 +773,15 @@ async function deleteOldSessions(){
 	
 	
 }setInterval(deleteOldSessions,60000)//clear check every minute
+
+
+function shuffle(deck){
+	deck = JSON.parse(JSON.stringify(deck))
+	let newDeck = []
+	
+	while(deck.length > 0){
+		let card = deck.splice(Math.floor(Math.random()*deck.length),1)
+		newDeck = newDeck.concat(card)
+	}
+	return newDeck
+}
