@@ -328,7 +328,10 @@ async function marioPlay(who){
     }
 	updateGame(false)
 }
-
+async function resolveQueue(endTurn = false){
+	await fetch(ROOT+"resolveQueue?s=" + session + "&g=" + currentGame)
+	updateGame(false)
+}
 
 
 
