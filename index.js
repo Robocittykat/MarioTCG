@@ -266,7 +266,7 @@ app.get('/createMARIOGame',async (req,res) => {
 		players: [],
 		gameType: "MARIO",
 		gameData: {
-			
+			turn: {}
 		}
     }
     await redify('games',n,game)
@@ -311,9 +311,9 @@ app.get('/joinGame',async (req,res)=>{
 		case "MARIO":
 			let shuffledDeck = shuffle((await getUsers())[sessions[userSess].u].deck)
 			game.gameData[sessions[userSess].u] = {
-				queue: [CARD(shuffledDeck.pop()),CARD(shuffledDeck.pop()),CARD(shuffledDeck.pop()),CARD(shuffledDeck.pop()),CARD(shuffledDeck.pop()),],
+				queue: [CARD(shuffledDeck.pop(),sessions[userSess].u),CARD(shuffledDeck.pop(),sessions[userSess].u),CARD(shuffledDeck.pop(),sessions[userSess].u),CARD(shuffledDeck.pop(),sessions[userSess].u),CARD(shuffledDeck.pop(),sessions[userSess].u),],
 				deck: shuffledDeck,
-				hand: [CARD(shuffledDeck.pop()),CARD(shuffledDeck.pop()),CARD(shuffledDeck.pop()),CARD(shuffledDeck.pop()),CARD(shuffledDeck.pop()),],
+				hand: [CARD(shuffledDeck.pop(),sessions[userSess].u),CARD(shuffledDeck.pop(),sessions[userSess].u),CARD(shuffledDeck.pop(),sessions[userSess].u),CARD(shuffledDeck.pop(),sessions[userSess].u),CARD(shuffledDeck.pop(),sessions[userSess].u),],
 				items: [],
 				state: {
 					mush: false, //super is a keyword, thus needs quotes
@@ -438,7 +438,7 @@ app.get('/cowSubmit',async (req,res) => {
 	res.json(true)
 })
 app.get('/marioPlay',async (req,res) => {
-	let choice = req.query.choice
+	let choice = [].concat(req.query.choice)
 	console.log(choice)
 	let who = req.query.who
 	let s = sineEncrypt(req.query.s)
@@ -448,21 +448,29 @@ app.get('/marioPlay',async (req,res) => {
 	let sessions = await getSessions()
 	
 	let user = sessions[s]
+	
+	let player = game.gameData[user.u]
 	let opponent = null
+	
 	for(let p of game.players){
 		if(p != user.u){
-			opponent = p
+			opponent = game.gameData[p]
 			break
 		}
 	}
 	
+	let cardsToAdd = []
 	for(let card of choice){
+		cardsToAdd = cardsToAdd.concat(player.hand[card])
+	}
+	
+	for(let card of cardsToAdd){
 		if(who == 0){
-			game.gameData[user.u].queue = game.gameData[user.u].queue.concat(game.gameData[user.u].hand[card])
+			player.queue = player.queue.concat(card)
 		}else if(who == 1){
-			game.gameData[opponent].queue = game.gameData[opponent].queue.concat(game.gameData[user.u].hand[card])
+			opponent.queue = opponent.queue.concat(card)
 		}
-		game.gameData[user.u].hand.splice(card,1)
+		player.hand.splice(player.hand.indexOf(card),1)
 	}
 	
 	
@@ -474,16 +482,16 @@ app.get('/resolveQueue', async (req,res) => {
 	let s = sineEncrypt(req.query.s)
 	let g = req.query.g
 	
-	let game = await deredigy('games',g)
+	let game = await deredify('games',g)
 	let sessions = await getSessions()
 	
 	let user = sessions[s]
 	let player = game.gameData[user.u]
 	
 	let resolvingCard = game.gameData[user.u].queue.shift()
-	player.discard = player.discard.concat(resolvingCard.name)
+	game.gameData[resolvingCard.owner].discard = game.gameData[resolvingCard.owner].discard.concat(resolvingCard.name)
 	for(let card of resolvingCard.pile){
-		player.discard = player.discard.concat(card.name)
+		game.gameData[card.owner].discard = game.gameData[card.owner].discard.concat(card.name)
 	}
 	
 	onEncounter(resolvingCard.onEncounter,player,game,user.u)
@@ -491,8 +499,8 @@ app.get('/resolveQueue', async (req,res) => {
 	if(resolvingCard.type == "e"){
 		let result = battle(resolvingCard,player)
 		if(result = 0){ //take damage
-			if(player.state.power != ""){
-				player.state.power = ""
+			if(player.state.power != null){
+				player.state.power = null
 			}else if(player.state.mush){
 				player.state.mush = false
 			}else{
@@ -500,17 +508,30 @@ app.get('/resolveQueue', async (req,res) => {
 				if(player.state.lives > 0){
 					player.deck = player.deck.concat(player.hand)
 					player.hand = []
-					for(let i = 0; i<5; i++){player.hand = player.hand.concat(CARD(player.discard.pop))}
+					for(let i = 0; i<5; i++){player.hand = player.hand.concat(CARD(player.discard.pop,user.u))}
 				}else{
-					
+					for(let card of player.queue){
+						game.gameData[card.owner].discard = game.gameData[card.owner].discard.concat(card.name)
+					}
+					player.deck = player.deck.concat(player.hand)
+					for(let i = 0; i<player.discard; i++){
+						player.deck = player.deck.concat(player.discard.pop())
+					}
+					for(let i = 0; i<5; i++){player.queue = player.queue.concat(CARD(player.discard.pop(),user.u))}
+					for(let i = 0; i<5; i++){player.hand = player.hand.concat(CARD(player.discard.pop(),user.u))}
+					player.state.lives = 3
+				}
 			}
 		}
 			
 	}
+	await redify('games',g,game)
+	
+	res.json(true)
 })
 
 
-function CARD(name){
+function CARD(name,owner=null){
 	let card = defaultCARD()
 	
 	switch(name){
@@ -687,8 +708,9 @@ function CARD(name){
 	}
 	card.name = name
 	card.img = "/cardimg?name=" + name + ".png"
+	card.owner = owner
 	return card
-}CARD("little_goomba_smb1")
+}
 function defaultCARD(){
 	return {
 		name: "",
@@ -725,28 +747,31 @@ function defaultCARD(){
 		},
 		onThrow: 0, //kill first enemy
 		isAux: false,
+		owner: null,
 	}
 }
 
 function rollDie(sides = 12){
-	return Math.ceil(Math.random()*sides)
+	let res = Math.ceil(Math.random()*sides)
+	console.log(res)
+	return res
 }
 
 function battle(card,player){
-	let atts = card.attributes
-	let dist = [1,1,1]
-	if(atts.unstompable){
+	let atts = card.traits //easily_avoidable
+	let dist = [1,1,1] //[1,1,1]
+	if(atts.unstompable){ //false
 		dist[1] = 0
-	}if(atts.easily_avoidable){
-		dist[2] += 1
+	}if(atts.easily_avoidable){ //true
+		dist[2] += 1 //[1,1,2]
 	}if(atts.difficult){
 		dist[0] += 1
 	}
-	dist = [dist[0],dist[0]+dist[1],dist[0]+dist[1]+dist[2]]
-	let die = rollDie(dist[2])
+	let die = rollDie(dist[0]+dist[1]+dist[2])
 	for(let i in dist){
 		die -= dist[i]
 		if(die <= 0){
+			console.log(i)
 			return i
 		}
 	}
@@ -754,6 +779,7 @@ function battle(card,player){
 
 
 function onEncounter(flag,player,game={},playerName = ""){//idk if game is necesary
+	let die
 	switch(flag){
 	case null:
 		return
@@ -764,7 +790,7 @@ function onEncounter(flag,player,game={},playerName = ""){//idk if game is neces
 		game.gameData.winner = playerName
 		break
 	case 103: //pipe
-		let die = rollDie()
+		die = rollDie()
 		if(die >= 8){
 			player.state.coins += 5
 			if(player.state.mush){
@@ -773,7 +799,7 @@ function onEncounter(flag,player,game={},playerName = ""){//idk if game is neces
 			for(let i = 0; i<5; i++){player.queue.shift()}
 		}break
 	case 104: //q block
-		let die = rollDie()
+		die = rollDie()
 		if(die <= 3){
 			player.state.coins ++
 		}else if(die <= 6){
@@ -784,7 +810,7 @@ function onEncounter(flag,player,game={},playerName = ""){//idk if game is neces
 			}player.state.mush = true
 		}break
 	case 105: //brick
-		let die = rollDie()
+		die = rollDie()
 		if(die <= 3){
 		}else if(die <= 7){
 			player.state.coins += 3
@@ -794,13 +820,13 @@ function onEncounter(flag,player,game={},playerName = ""){//idk if game is neces
 			player.state.lives ++
 		}break
 	case 106: //hidden
-		let die = rollDie()
+		die = rollDie()
 		if(die <= 5){
 		}else{
 			player.state.lives ++
 		}break
 	case 107: //bottomless pit
-		let die = rollDie()
+		die = rollDie()
 		if(die <= 2){
 			player.state.power = ""
 			player.state.mush = false

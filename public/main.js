@@ -241,6 +241,7 @@ async function updateGame(recurse = true){
 		if(marioOppHand.innerHTML != newData){
 			marioOppHand.innerHTML = newData
 		}
+		marioStateDisplay.innerHTML = JSON.stringify(player.state)
 		currentlyDisplayed = game.gameData
     }
     
