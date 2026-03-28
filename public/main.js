@@ -242,7 +242,30 @@ async function updateGame(recurse = true){
 			marioOppHand.innerHTML = newData
 		}
 		marioStateDisplay.innerHTML = JSON.stringify(player.state)
+		
 		currentlyDisplayed = game.gameData
+		
+		
+		
+		let turn = game.gameData.turn
+		if(turn.player == user.u){
+			if(phase == "play"){
+				marioSelfPlay.disabled = false
+				marioOppPlay.disabled = false
+				resolveQueue.disabled = true
+				marioEndTurn.disabled = true
+			}else{
+				resolveQueue.disabled = false
+				marioEndTurn.disabled = false
+				marioSelfPlay.disabled = true
+				marioOppPlay.disabled = true
+			}
+		}else{
+			resolveQueue.disabled = true
+			marioEndTurn.disabled = true
+			marioSelfPlay.disabled = true
+			marioOppPlay.disabled = true
+		}
     }
     
     

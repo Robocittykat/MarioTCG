@@ -266,7 +266,10 @@ app.get('/createMARIOGame',async (req,res) => {
 		players: [],
 		gameType: "MARIO",
 		gameData: {
-			turn: {}
+			turn: {
+				player: null,
+				phase: "play",
+			}
 		}
     }
     await redify('games',n,game)
@@ -316,12 +319,15 @@ app.get('/joinGame',async (req,res)=>{
 				hand: [CARD(shuffledDeck.pop(),sessions[userSess].u),CARD(shuffledDeck.pop(),sessions[userSess].u),CARD(shuffledDeck.pop(),sessions[userSess].u),CARD(shuffledDeck.pop(),sessions[userSess].u),CARD(shuffledDeck.pop(),sessions[userSess].u),],
 				items: [],
 				state: {
-					mush: false, //super is a keyword, thus needs quotes
+					mush: false,
 					power: null,
 					coins: 0,
 					lives: 3,
 				},
 				discard: [],
+			}
+			if(game.players.length == 2){
+				game.gameData.turn.player = game.players[Math.floor(Math.random()*2)]
 			}
 		    break
 		}
