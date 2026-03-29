@@ -446,6 +446,9 @@ app.get('/cowSubmit',async (req,res) => {
 app.get('/marioPlay',async (req,res) => {
 	let choice = [].concat(req.query.choice)
 	console.log(choice)
+	if(choice[0] == ''){
+		choice = []
+	}
 	let who = req.query.who
 	let s = sineEncrypt(req.query.s)
 	let g = req.query.g
@@ -478,7 +481,7 @@ app.get('/marioPlay',async (req,res) => {
 		}
 		player.hand.splice(player.hand.indexOf(card),1)
 	}
-	
+	game.gameData.turn.phase = "resolve"
 	
 	await redify('games',g,game)
 	
@@ -493,6 +496,13 @@ app.get('/resolveQueue', async (req,res) => {
 	
 	let user = sessions[s]
 	let player = game.gameData[user.u]
+	let opponent = null
+	for(let p of game.players){
+		if(p != user.u){
+			opponent = p
+			break
+		}
+	}
 	
 	let resolvingCard = game.gameData[user.u].queue.shift()
 	game.gameData[resolvingCard.owner].discard = game.gameData[resolvingCard.owner].discard.concat(resolvingCard.name)
@@ -504,7 +514,7 @@ app.get('/resolveQueue', async (req,res) => {
 
 	if(resolvingCard.type == "e"){
 		let result = battle(resolvingCard,player)
-		if(result = 0){ //take damage
+		if(result == 0){ //take damage
 			if(player.state.power != null){
 				player.state.power = null
 			}else if(player.state.mush){
@@ -512,30 +522,71 @@ app.get('/resolveQueue', async (req,res) => {
 			}else{
 				player.state.lives --
 				if(player.state.lives > 0){
-					player.deck = player.deck.concat(player.hand)
-					player.hand = []
-					for(let i = 0; i<5; i++){player.hand = player.hand.concat(CARD(player.discard.pop,user.u))}
+					for(let i = 0; i<5 && player.discard.length>0; i++){player.deck = player.deck.concat(player.discard.pop())}
 				}else{
 					for(let card of player.queue){
 						game.gameData[card.owner].discard = game.gameData[card.owner].discard.concat(card.name)
-					}
-					player.deck = player.deck.concat(player.hand)
-					for(let i = 0; i<player.discard; i++){
+					}player.queue = []
+					
+					player.deck = player.deck.concat(player.hand.map(card=>card.name))
+					player.hand = []
+					
+					for(let i = 0; i<player.discard.length; i++){ //need to add it back backwards
 						player.deck = player.deck.concat(player.discard.pop())
 					}
-					for(let i = 0; i<5; i++){player.queue = player.queue.concat(CARD(player.discard.pop(),user.u))}
-					for(let i = 0; i<5; i++){player.hand = player.hand.concat(CARD(player.discard.pop(),user.u))}
+					
+					//repopulate
+					for(let i = 0; i<5; i++){player.queue = player.queue.concat(CARD(player.deck.pop(),user.u))}
+					
 					player.state.lives = 3
 				}
 			}
+			game.gameData.turn.player = opponent
+			game.gameData.turn.phase = "play"
+			do{
+				player.hand = player.hand.concat(CARD(player.deck.pop(),user.u))
+			}while(player.hand.length < 5) //If you have <5 cards, draw up to 5. Otherwise, draw 1.
+		}else if(result == 1){ //stomp
+			game.gameData.turn.player = opponent
+			game.gameData.turn.phase = "play"
+			do{
+				player.hand = player.hand.concat(CARD(player.deck.pop(),user.u))
+			}while(player.hand.length < 5) //If you have <5 cards, draw up to 5. Otherwise, draw 1.
 		}
-			
+		
+		
 	}
+	
 	await redify('games',g,game)
 	
 	res.json(true)
 })
-
+app.get('/endTurn', async (req,res) => {
+	let s = sineEncrypt(req.query.s)
+	let g = req.query.g
+	
+	let game = await deredify('games',g)
+	let sessions = await getSessions()
+	
+	let user = sessions[s]
+	let player = game.gameData[user.u]
+	let opponent = null
+	for(let p of game.players){
+		if(p != user.u){
+			opponent = p
+			break
+		}
+	}
+	
+	game.gameData.turn.player = opponent
+	game.gameData.turn.phase = "play"
+	do{
+		player.hand = player.hand.concat(CARD(player.deck.pop(),user.u))
+	}while(player.hand.length < 5) //If you have <5 cards, draw up to 5. Otherwise, draw 1.
+	
+	await redify('games',g,game)
+	res.json(true)
+})
 
 function CARD(name,owner=null){
 	let card = defaultCARD()
@@ -802,7 +853,10 @@ function onEncounter(flag,player,game={},playerName = ""){//idk if game is neces
 			if(player.state.mush){
 				player.state.power = "fire_flower"
 			}player.state.mush = true
-			for(let i = 0; i<5; i++){player.queue.shift()}
+			for(let i = 0; i<5; i++){
+				let card = player.queue.shift()
+				game.gameData[card.owner].discard = game.gameData[card.owner].discard.concat(card.name)
+			}
 		}break
 	case 104: //q block
 		die = rollDie()

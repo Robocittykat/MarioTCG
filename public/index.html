@@ -68,64 +68,20 @@
 			<span id="marioItems" class="cardContainer">
 				
 			</span>
-			<button id="marioSelfPlay" onclick="marioPlay(0)">Play on self</button>
-			<button id="marioOppPlay" onclick="marioPlay(1)">Play on opponent</button>
-			<button id="resolveQueue" onclick="resolveQueue()">Resolve queue</button>
-			<button id="marioEndTurn" onclick="resolveQueue(true)">End turn</button><br>
-			<text id="marioStateDisplay"></text>
+			<button id="marioSelfPlay" onclick="marioPlay(0)" disabled>Play on self</button>
+			<button id="marioOppPlay" onclick="marioPlay(1)" disabled>Play on opponent</button>
+			<button id="marioResolveQueue" onclick="resolveQueue()" disabled>Resolve queue</button>
+			<button id="marioEndTurn" onclick="endTurn()" disabled>End turn</button><br>
+			<text id="marioStateDisplay"></text><br>
+			<text>Deck: <span id="marioDeckSize"></span></text><br>
+			<text>Discard: <span id="marioDiscardSize"></span></text>
 		</div>
 		<br>
 		<h1 id="gameWinner"></h1>
 		
 		<img id="reaction" hidden>
 	</div>
-	<!--
-	<div id="gameDiv" hidden>
-		<div id="opponentGameArea">
-			<div id="opponentQueue">
-				<img class="queueCard" src="https://4f017fd1-a3f6-47e1-9546-3aaebdc4f953-00-2cjw66jkbx2zi.spock.replit.dev/cardimg?name=brick_block">
-				<img class="queueCard" src="https://4f017fd1-a3f6-47e1-9546-3aaebdc4f953-00-2cjw66jkbx2zi.spock.replit.dev/cardimg?name=question_block">
-				<img class="queueCard" src="https://4f017fd1-a3f6-47e1-9546-3aaebdc4f953-00-2cjw66jkbx2zi.spock.replit.dev/cardimg?name=brick_block">
-				<img class="queueCard" src="https://4f017fd1-a3f6-47e1-9546-3aaebdc4f953-00-2cjw66jkbx2zi.spock.replit.dev/cardimg?name=question_block">
-				<img class="queueCard" src="https://4f017fd1-a3f6-47e1-9546-3aaebdc4f953-00-2cjw66jkbx2zi.spock.replit.dev/cardimg?name=brick_block">
-			</div>
-			<span id="opponentDeck">
-				<img class="gameCard" src="https://mario-backend.robocittykat.repl.co/cardimg?name=card_back"><text style="font-size: 12px;">40</text>
-			</span>
-			<span id="opponentHand">
-				<img class="gameCard" src="https://mario-backend.robocittykat.repl.co/cardimg?name=card_back">
-				<img class="gameCard" src="https://mario-backend.robocittykat.repl.co/cardimg?name=card_back">
-				<img class="gameCard" src="https://mario-backend.robocittykat.repl.co/cardimg?name=card_back">
-				<img class="gameCard" src="https://mario-backend.robocittykat.repl.co/cardimg?name=card_back">
-				<img class="gameCard" src="https://mario-backend.robocittykat.repl.co/cardimg?name=card_back">
-			</span>
-			<span id="opponentDiscard">
-				<img class="gameCard" src="https://mario-backend.robocittykat.repl.co/cardimg?name=little_goomba">
-			</span>
-		</div>
-		<br><hr><br>
-		<div id="userGameArea">
-			<div id="userQueue">
-				<img class="gameCard" src="https://mario-backend.robocittykat.repl.co/cardimg?name=brick_block">
-				<img class="gameCard" src="https://mario-backend.robocittykat.repl.co/cardimg?name=pipe">
-				<img class="gameCard" src="https://mario-backend.robocittykat.repl.co/cardimg?name=flagpole">
-			</div>
-			<span id="userDiscard">
-				<img class="gameCard" src="https://mario-backend.robocittykat.repl.co/cardimg?name=fire_bar">
-			</span>
-			<span id="userHand">
-				<img class="gameCard" src="https://mario-backend.robocittykat.repl.co/cardimg?name=little_goomba">
-				<img class="gameCard" src="https://mario-backend.robocittykat.repl.co/cardimg?name=hidden_block">
-				<img class="gameCard" src="https://mario-backend.robocittykat.repl.co/cardimg?name=bowser">
-				<img class="gameCard" src="https://mario-backend.robocittykat.repl.co/cardimg?name=floating_platform">
-				<img class="gameCard" src="https://mario-backend.robocittykat.repl.co/cardimg?name=bottomless_pit">
-			</span>
-			<span id="userDeck">
-				<img class="gameCard" src="https://mario-backend.robocittykat.repl.co/cardimg?name=card_back">
-			</span>
-		</div>
-	</div>
-	-->
+	
 
 
 	<script src="main.js"></script>

@@ -242,26 +242,29 @@ async function updateGame(recurse = true){
 			marioOppHand.innerHTML = newData
 		}
 		marioStateDisplay.innerHTML = JSON.stringify(player.state)
+		marioDeckSize.innerHTML = player.deck.length
+		marioDiscardSize.innerHTML = player.discard.length
 		
 		currentlyDisplayed = game.gameData
 		
 		
 		
 		let turn = game.gameData.turn
+		//console.log("hello")
 		if(turn.player == user.u){
-			if(phase == "play"){
+			if(turn.phase == "play"){
 				marioSelfPlay.disabled = false
 				marioOppPlay.disabled = false
-				resolveQueue.disabled = true
+				marioResolveQueue.disabled = true
 				marioEndTurn.disabled = true
 			}else{
-				resolveQueue.disabled = false
+				marioResolveQueue.disabled = false
 				marioEndTurn.disabled = false
 				marioSelfPlay.disabled = true
 				marioOppPlay.disabled = true
 			}
 		}else{
-			resolveQueue.disabled = true
+			marioResolveQueue.disabled = true
 			marioEndTurn.disabled = true
 			marioSelfPlay.disabled = true
 			marioOppPlay.disabled = true
@@ -352,11 +355,14 @@ async function marioPlay(who){
     }
 	updateGame(false)
 }
-async function resolveQueue(endTurn = false){
+async function resolveQueue(){
 	await fetch(ROOT+"resolveQueue?s=" + session + "&g=" + currentGame)
 	updateGame(false)
 }
-
+async function endTurn(){
+	await fetch(ROOT+"endTurn?s=" + session + "&g=" + currentGame)
+	updateGame(false)
+}
 
 
 
