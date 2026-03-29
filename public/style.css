@@ -8,7 +8,7 @@ body{
 }
 
 .gameCard{
-	width: 8vw;
+	height: 100%;
 	margin: 0;
 	padding: 0;
 	display: inline-block;
@@ -38,9 +38,8 @@ body{
 	left: calc(92% - 8px)
 }
 
-#opponentGameArea{
+.opp{
 	transform: rotateZ(180deg);
-	margin-bottom: 0;
 }
 #userGameArea{
 	width: calc(100vw-8px)
@@ -54,4 +53,16 @@ hr{
 	border: 2px solid black;
 	margin-top: 10px;
 	margin-bottom: 10px;
+}
+
+.cardContainer{
+	/*width: 100vw;*/
+	height: 15vh;
+	text-wrap: nowrap;
+	overflow-x: auto;
+	overflow-y: hidden;
+}
+
+.selected{
+    transform: translateY(-20px);
 }

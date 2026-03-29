@@ -2,9 +2,7 @@ import express from "express"
 import * as path from "path"
 import * as fs from "fs"
 
-/*const express = require("express");
-const path = require("path");
-const fs = require("fs");*/
+
 const app = express();
 const PORT = 3000;
 const __dirname = import.meta.dirname
@@ -40,7 +38,7 @@ async function deredify(obj,param = null){
 
 
 function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms))
+	return new Promise(resolve => setTimeout(resolve, ms))
 }
 
 // Serve frontend from public/
@@ -50,16 +48,16 @@ app.use(express.static("./public"));
 //app.use('/images',express.static('images'))
 
 /*
-let sessions = {
-/*	0.12345:{			*\
-		u:"sampleUser",
-		p:"0.12345"
-\*	}					 /
-	"-1":{
-		u:"Robocittykat",
-		p:"-0.9067791778486455"
-	}
-}
+  let sessions = {
+  /*	0.12345:{			*\
+  u:"sampleUser",
+  p:"0.12345"
+  \*	}					 /
+  "-1":{
+  u:"Robocittykat",
+  p:"-0.9067791778486455"
+  }
+  }
 */
 
 async function getUsers(){
@@ -76,11 +74,11 @@ async function getSessions(){
 
 
 app.get("/test", async (req,res) => {
-  res.send("Test successful!")
+	res.send("Test successful!")
 })
 
 app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
+	console.log(`Server running at http://localhost:${PORT}`);
 })
 
 
@@ -90,13 +88,12 @@ app.get('/blobTest',async (req,res) => {
 	res.json(blobData)
 })
 
-//carded jumping man
 
 
 /*
-app.get('/', async (req,res) => {
+  app.get('/', async (req,res) => {
   res.sendFile('./public/index.html');
-});
+  });
 */
 
 app.get('/cardimg', async (req,res) => {
@@ -104,9 +101,9 @@ app.get('/cardimg', async (req,res) => {
 	// root/cardimg?name=<name>
 	let name = req.query.name;
 	
-
+	
 	res.sendFile(path.join(__dirname,"images",name))
-
+	
 });
 
 
@@ -166,7 +163,10 @@ app.get('/users', async (req,res) => {
     let usernames = await getUsers()
 	res.json(usernames);
 });
-
+app.get('/deleteUser', async (req,res) => {
+	await redis.hDel('users',req.query.callingItThisToPreventTerrorism)
+	res.send("Wow. You killed them. Just wow. " + req.query.callingItThisToPreventTerrorism + " is dead all because of you. Are you happy with yourself?")
+})
 app.get('/deleteAllUsers', async (req,res) => {
 	await redis.del('users')
 	res.send("You Frankenstein's Monster")//listening to the audiobook while writing this
@@ -192,7 +192,7 @@ app.get('/sessionExists',async (req,res) => {
 })
 app.get('/endSession',async (req,res) => {
     let s = sineEncrypt(req.query.s)+""
-	await redis.hDel('sessions',s)
+	//await redis.hDel('sessions',s)
 	res.send("session "+s+" has been terminated.<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><sub>you monster</sub>")
 })
 app.get('/deleteAllSessions',async (req,res) => {
@@ -255,6 +255,26 @@ app.get('/createCOWGame',async (req,res) => {
 	
 	res.json(true)
 })
+app.get('/createMARIOGame',async (req,res) => {
+    let n = req.query.n
+    let p = sineEncrypt(req.query.p)
+	
+    let game = {
+		pass: p,
+		gameCreated: new Date().getTime(),
+		isPublic: p == '',
+		players: [],
+		gameType: "MARIO",
+		gameData: {
+			turn: {
+				player: null,
+				phase: "play",
+			}
+		}
+    }
+    await redify('games',n,game)
+    res.json(true)
+})
 app.get('/deleteAllGames',async (req,res)=>{
 	await redis.del('games')
 	res.send("You monster.")
@@ -264,7 +284,7 @@ app.get('/joinGame',async (req,res)=>{
     let gamePass = sineEncrypt(req.query.p)
     let userSess = sineEncrypt(req.query.s)
 	//console.log(gameName,gamePass,userSess)
-
+	
     let userData = await getUsers()
 	let game = await deredify('games',gameName)
 	let sessions = await getSessions()
@@ -282,12 +302,36 @@ app.get('/joinGame',async (req,res)=>{
 	
     if(game.players.length < 2){
 		game.players = game.players.concat(sessions[userSess].u)
-		game.gameData[sessions[userSess].u] = {
-			bullets: 0,
-			submitted: false,
-			choice: -1,
-			lastChoice: -1,
+		switch(game.gameType){
+		case "COW":
+			game.gameData[sessions[userSess].u] = {
+				bullets: 0,
+				submitted: false,
+				choice: -1,
+				lastChoice: -1,
+			}
+			break
+		case "MARIO":
+			let shuffledDeck = shuffle((await getUsers())[sessions[userSess].u].deck)
+			game.gameData[sessions[userSess].u] = {
+				queue: [CARD(shuffledDeck.pop(),sessions[userSess].u),CARD(shuffledDeck.pop(),sessions[userSess].u),CARD(shuffledDeck.pop(),sessions[userSess].u),CARD(shuffledDeck.pop(),sessions[userSess].u),CARD(shuffledDeck.pop(),sessions[userSess].u),],
+				deck: shuffledDeck,
+				hand: [CARD(shuffledDeck.pop(),sessions[userSess].u),CARD(shuffledDeck.pop(),sessions[userSess].u),CARD(shuffledDeck.pop(),sessions[userSess].u),CARD(shuffledDeck.pop(),sessions[userSess].u),CARD(shuffledDeck.pop(),sessions[userSess].u),],
+				items: [],
+				state: {
+					mush: false,
+					power: null,
+					coins: 0,
+					lives: 3,
+				},
+				discard: [],
+			}
+			if(game.players.length == 2){
+				game.gameData.turn.player = game.players[Math.floor(Math.random()*2)]
+			}
+		    break
 		}
+		
 		await redify('games',gameName,game)
 		res.json(game)
     }else{
@@ -315,16 +359,16 @@ app.get('/rpsSubmit',async (req,res)=>{
 	
 	let playerNumber = game.players.indexOf(user.u)
 	switch(playerNumber){
-		case -1:
-			res.json("You aren't in this game!")
-			return
-			break
-		case 0:
-			game.gameData.p1Choice = choice
-			break
-		case 1:
-			game.gameData.p2Choice = choice
-			break
+	case -1:
+		res.json("You aren't in this game!")
+		return
+		break
+	case 0:
+		game.gameData.p1Choice = choice
+		break
+	case 1:
+		game.gameData.p2Choice = choice
+		break
 	}
 	
 	let p1Choice = game.gameData.p1Choice
@@ -391,85 +435,520 @@ app.get('/cowSubmit',async (req,res) => {
 		p2.submitted = false
 	}
 	
+	if(game.gameData.winner != null){
+		setTimeout(async ()=>{await redis.hDel('games',g)},60000)
+	}
+	
 	await redify('games',g,game)
 	
 	res.json(true)
 })
+app.get('/marioPlay',async (req,res) => {
+	let choice = [].concat(req.query.choice)
+	console.log(choice)
+	if(choice[0] == ''){
+		choice = []
+	}
+	let who = req.query.who
+	let s = sineEncrypt(req.query.s)
+	let g = req.query.g
+	
+	let game = await deredify('games',g)
+	let sessions = await getSessions()
+	
+	let user = sessions[s]
+	
+	let player = game.gameData[user.u]
+	let opponent = null
+	
+	for(let p of game.players){
+		if(p != user.u){
+			opponent = game.gameData[p]
+			break
+		}
+	}
+	
+	let cardsToAdd = []
+	for(let card of choice){
+		cardsToAdd = cardsToAdd.concat(player.hand[card])
+	}
+	
+	for(let card of cardsToAdd){
+		if(who == 0){
+			player.queue = player.queue.concat(card)
+		}else if(who == 1){
+			opponent.queue = opponent.queue.concat(card)
+		}
+		player.hand.splice(player.hand.indexOf(card),1)
+	}
+	game.gameData.turn.phase = "resolve"
+	
+	await redify('games',g,game)
+	
+	res.json(true)
+})
+app.get('/resolveQueue', async (req,res) => {
+	let s = sineEncrypt(req.query.s)
+	let g = req.query.g
+	
+	let game = await deredify('games',g)
+	let sessions = await getSessions()
+	
+	let user = sessions[s]
+	let player = game.gameData[user.u]
+	let opponent = null
+	for(let p of game.players){
+		if(p != user.u){
+			opponent = p
+			break
+		}
+	}
+	
+	let resolvingCard = game.gameData[user.u].queue.shift()
+	game.gameData[resolvingCard.owner].discard = game.gameData[resolvingCard.owner].discard.concat(resolvingCard.name)
+	for(let card of resolvingCard.pile){
+		game.gameData[card.owner].discard = game.gameData[card.owner].discard.concat(card.name)
+	}
+	
+	onEncounter(resolvingCard.onEncounter,player,game,user.u)
 
+	if(resolvingCard.type == "e"){
+		let result = battle(resolvingCard,player)
+		if(result == 0){ //take damage
+			if(player.state.power != null){
+				player.state.power = null
+			}else if(player.state.mush){
+				player.state.mush = false
+			}else{
+				player.state.lives --
+				if(player.state.lives > 0){
+					for(let i = 0; i<5 && player.discard.length>0; i++){player.deck = player.deck.concat(player.discard.pop())}
+				}else{
+					for(let card of player.queue){
+						game.gameData[card.owner].discard = game.gameData[card.owner].discard.concat(card.name)
+					}player.queue = []
+					
+					player.deck = player.deck.concat(player.hand.map(card=>card.name))
+					player.hand = []
+					
+					for(let i = 0; i<player.discard.length; i++){ //need to add it back backwards
+						player.deck = player.deck.concat(player.discard.pop())
+					}
+					
+					//repopulate
+					for(let i = 0; i<5; i++){player.queue = player.queue.concat(CARD(player.deck.pop(),user.u))}
+					
+					player.state.lives = 3
+				}
+			}
+			game.gameData.turn.player = opponent
+			game.gameData.turn.phase = "play"
+			do{
+				player.hand = player.hand.concat(CARD(player.deck.pop(),user.u))
+			}while(player.hand.length < 5) //If you have <5 cards, draw up to 5. Otherwise, draw 1.
+		}else if(result == 1){ //stomp
+			game.gameData.turn.player = opponent
+			game.gameData.turn.phase = "play"
+			do{
+				player.hand = player.hand.concat(CARD(player.deck.pop(),user.u))
+			}while(player.hand.length < 5) //If you have <5 cards, draw up to 5. Otherwise, draw 1.
+		}
+		
+		
+	}
+	
+	await redify('games',g,game)
+	
+	res.json(true)
+})
+app.get('/endTurn', async (req,res) => {
+	let s = sineEncrypt(req.query.s)
+	let g = req.query.g
+	
+	let game = await deredify('games',g)
+	let sessions = await getSessions()
+	
+	let user = sessions[s]
+	let player = game.gameData[user.u]
+	let opponent = null
+	for(let p of game.players){
+		if(p != user.u){
+			opponent = p
+			break
+		}
+	}
+	
+	game.gameData.turn.player = opponent
+	game.gameData.turn.phase = "play"
+	do{
+		player.hand = player.hand.concat(CARD(player.deck.pop(),user.u))
+	}while(player.hand.length < 5) //If you have <5 cards, draw up to 5. Otherwise, draw 1.
+	
+	await redify('games',g,game)
+	res.json(true)
+})
 
-/*
+function CARD(name,owner=null){
+	let card = defaultCARD()
+	
+	switch(name){
+		//prototypes (base types, ignoring renames or variants)
+	case "goomba":
+		card.proto = "goomba"
+		card.type = "e"
+		break
+	case "koopa_troopa":
+		card.proto = "koopa_troopa"
+		card.type = "e"
+		card.traits.grabbable = true
+		card.onThrow = 1 //kill consecutive enemies, become enemy at start of queue
+		break
+	case "red_koopa":
+		card.proto = "red_koopa"
+		card.type = "e"
+		card.traits.grabbable = true
+		card.onJump = 0 //replace at end of queue
+		card.onThrow = 1 //kill consecutive enemies, become enemy at start of queue
+		break
+	case "parakoopa":
+		card.proto = "parakoopa"
+		card.type = "e"
+		card.traits.easily_avoidable = true
+		card.onStomp = 100 //spawn koopa in place
+		break
+	case "buzzy_beetle":
+		card.proto = "buzzy_beetle"
+		card.type = "e"
+		card.traits.fireproof = true
+		card.traits.grabbable = true
+		card.onThrow = 1 //kill consecutive enemies, become enemy at start of queue
+		break
+	case "piranha_plant":
+		card.proto = "piranha_plant"
+		card.type = "e"
+		card.allowedParents = ["pipe"]
+		card.traits.unstompable = true
+		break
+	case "bullet_bill":
+		card.proto = "bullet_bill"
+		card.type = "e"
+		card.isAux = true
+		card.traits.easily_avoidable = true
+		card.traits.fireproof = true
+		card.passive.turnStart = 0 //move forward
+		break
+	case "bullet_bill_cannon":
+		card.proto = "bullet_bill_cannon"
+		card.type = "o"
+		card.passive.turnStart = 101 //spawn bullet bill
+		break
+	case "pipe":
+		card.proto = "pipe"
+		card.type = "o"
+		card.onEncounter = 103 //pipe stuff
+		break
+	case "question_block":
+		card.proto = "question_block"
+		card.type = "o"
+		card.onEncounter = 104 //? block stuff
+		break
+	case "brick_block":
+		card.proto = "brick_block"
+		card.type = "o"
+		card.onEncounter = 105 //brick block stuff
+		break
+	case "hidden_block":
+		card.proto = "hidden_block"
+		card.type = "o"
+		card.onEncounter = 106 //hidden block stuff
+		break
+	case "bottomless_pit":
+		card.proto = "bottomless_pit"
+		card.type = "o"
+		card.onEncounter = 107 //bottomless pit stuff
+		break
+	case "checkpoint":
+		card.proto = "checkpoint"
+		card.type = "s"
+		card.onEncounter = 0 //checkpoint
+		break
+	case "flagpole":
+		card.proto = "flagpole"
+		card.type = "s"
+		card.onEncounter = 1 //you win!
+		break
+	case "1-up":
+		card.proto = "1-up"
+		card.type = "i"
+		break
+	case "super_mushroom":
+		card.proto = "super_mushroom"
+		card.type = "i"
+		break
+	case "fire_flower":
+		card.proto = "fire_flower"
+		card.type = "i"
+		card.passive.encounter = 0 //fire flower stuff
+		break
+	case "super_star":
+		card.proto = "super_star"
+		card.type = "i"
+		card.passive.encounter = 108 //instakill enemies
+		card.passive.endTurn = 99 //remove at end of turn
+		break
+	case "coin":
+		card.proto = "coin"
+		card.type = "i"
+		break
+		
+		//smb1 cards
+	case "little_goomba_smb1":
+		card = CARD("goomba")
+		break
+	case "koopa_troopa_smb1":
+		card = CARD("koopa_troopa")
+		break
+	case "red_koopa_smb1":
+		card = CARD("red_koopa")
+		break
+	case "parakoopa_smb1":
+		card = CARD("parakoopa")
+		break
+	case "buzzy_beetle_smb1":
+		card = CARD("buzzy_beetle")
+		break
+	case "piranha_plant_smb1":
+		card = CARD("piranha_plant")
+		break
+	case "bullet_bill_smb1":
+		card = CARD("bullet_bill")
+		break
+	case "bullet_bill_cannon_smb1":
+		card = CARD("bullet_bill_cannon")
+		break
+	case "pipe_smb1":
+		card = CARD("pipe")
+		break
+	case "question_block_smb1":
+		card = CARD("question_block")
+		break
+	case "brick_block_smb1":
+		card = CARD("brick_block")
+		break
+	case "hidden_block_smb1":
+		card = CARD("hidden_block")
+		break
+	case "bottomless_pit_smb1":
+		card = CARD("bottomless_pit")
+		break
+	case "checkpoint_smb1":
+		card = CARD("checkpoint")
+		break
+	case "flagpole_smb1":
+		card = CARD("flagpole")
+		break
+	case "1-up_smb1":
+		card = CARD("1-up")
+		break
+	case "super_mushroom_smb1":
+			card = CARD("super_mushroom")
+		break
+	case "fire_flower_smb1":
+		card = CARD("fire_flower")
+		break
+	case "starman_smb1":
+		card = CARD("super_star")
+		break
+	case "coin_smb1":
+		card = CARD("coin")
+		break
+	}
+	card.name = name
+	card.img = "/cardimg?name=" + name + ".png"
+	card.owner = owner
+	return card
+}
+function defaultCARD(){
+	return {
+		name: "",
+		proto: "",
+		img: "/cardimg?name=",
+		pile: [],
+		allowedParents: [""],
+		altPlaceRestriction: null,
+		type: null,
+		grabbed: false,
+		traits: {
+			unstompable: false,
+			easily_avoidable: false,
+			difficult: false,
+			fireproof: false,
+			grabbable: false,
+			boss: false,
+			miniboss: false,
+		},
+		rollMod: 0,
+		onStomp: null,
+		onJump: null,
+		onHurt: null,
+		onEncounter: null, //applies before battle
+		passive:{
+			turnStart: null,
+			stomp: null,
+			encounter: null,
+			ten_coins: null,
+			jump: null,
+			damage: null,
+			resolvePhase: null,
+			endTurn: null,
+		},
+		onThrow: 0, //kill first enemy
+		isAux: false,
+		owner: null,
+	}
+}
 
+function rollDie(sides = 12){
+	let res = Math.ceil(Math.random()*sides)
+	console.log(res)
+	return res
+}
 
-
-
-
-function newPlayerObject(user){
-	return {name:user,
-			gameCoins:0,
-			deck:[],
-			discard:[],
-			hand:[],
-			lives:3,
-			queue:[],
-			powerUp:"none",
-			hasStar:false}
+function battle(card,player){
+	let atts = card.traits //easily_avoidable
+	let dist = [1,1,1] //[1,1,1]
+	if(atts.unstompable){ //false
+		dist[1] = 0
+	}if(atts.easily_avoidable){ //true
+		dist[2] += 1 //[1,1,2]
+	}if(atts.difficult){
+		dist[0] += 1
+	}
+	let die = rollDie(dist[0]+dist[1]+dist[2])
+	for(let i in dist){
+		die -= dist[i]
+		if(die <= 0){
+			console.log(i)
+			return i
+		}
+	}
 }
 
 
-
-
-function newDeck(){
-	return [
-		"hidden_block",
-		"bullet_bill_cannon",
-		"bullet_bill_cannon",
-		"koopa_troopa",
-		"koopa_troopa",
-		"koopa_troopa",
-		"koopa_troopa",
-		"buzzy_beetle",
-		"red_koopa",
-		"red_koopa",
-		"parakoopa",
-		"piranha_plant",
-		"pipe",
-		"pipe",
-		"pipe",
-		"pipe",
-		"goomba",
-		"goomba",
-		"goomba",
-		"goomba",
-		"goomba",
-		"goomba",
-		"goomba",
-		"goomba",
-		"question_block",
-		"question_block",
-		"question_block",
-		"question_block",
-		"question_block",
-		"brick_block",
-		"brick_block",
-		"brick_block",
-		"brick_block",
-		"brick_block",
-		"brick_block",
-		"brick_block",
-		"bottomless_pit",
-		"bottomless_pit",
-		"bottomless_pit",
-		"bottomless_pit",
-
-	]
+function onEncounter(flag,player,game={},playerName = ""){//idk if game is necesary
+	let die
+	switch(flag){
+	case null:
+		return
+	case 0: //checkpoint
+		player.discard = []
+		break
+	case 1: //flag
+		game.gameData.winner = playerName
+		break
+	case 103: //pipe
+		die = rollDie()
+		if(die >= 8){
+			player.state.coins += 5
+			if(player.state.mush){
+				player.state.power = "fire_flower"
+			}player.state.mush = true
+			for(let i = 0; i<5; i++){
+				let card = player.queue.shift()
+				game.gameData[card.owner].discard = game.gameData[card.owner].discard.concat(card.name)
+			}
+		}break
+	case 104: //q block
+		die = rollDie()
+		if(die <= 3){
+			player.state.coins ++
+		}else if(die <= 6){
+			player.state.coins += 3
+		}else{
+			if(player.state.mush){
+				player.state.power = "fire_flower"
+			}player.state.mush = true
+		}break
+	case 105: //brick
+		die = rollDie()
+		if(die <= 3){
+		}else if(die <= 7){
+			player.state.coins += 3
+		}else if(die <= 10){
+			player.state.star = true
+		}else{
+			player.state.lives ++
+		}break
+	case 106: //hidden
+		die = rollDie()
+		if(die <= 5){
+		}else{
+			player.state.lives ++
+		}break
+	case 107: //bottomless pit
+		die = rollDie()
+		if(die <= 2){
+			player.state.power = ""
+			player.state.mush = false
+			player.state.lives --
+		}break
+	}
 }
 
 
-
-
-*/
-
-
+app.get("/deckify", async (req,res) => {
+	let username = req.query.u
+	let user = (await getUsers())[username]
+	if(user.deck == undefined){
+		user.deck = [
+			"question_block_smb1",
+			"question_block_smb1",
+			"question_block_smb1",
+			"question_block_smb1",
+			"question_block_smb1",
+			"brick_block_smb1",
+			"brick_block_smb1",
+			"brick_block_smb1",
+			"brick_block_smb1",
+			"brick_block_smb1",
+			"brick_block_smb1",
+			"brick_block_smb1",
+			"hidden_block_smb1",
+			"pipe_smb1",
+			"pipe_smb1",
+			"pipe_smb1",
+			"pipe_smb1",
+			"bottomless_pit_smb1",
+			"bottomless_pit_smb1",
+			"bottomless_pit_smb1",
+			"bottomless_pit_smb1",
+			"bullet_bill_cannon_smb1",
+			"little_goomba_smb1",
+			"little_goomba_smb1",
+			"little_goomba_smb1",
+			"little_goomba_smb1",
+			"little_goomba_smb1",
+			"little_goomba_smb1",
+			"little_goomba_smb1",
+			"little_goomba_smb1",
+			"koopa_troopa_smb1",
+			"koopa_troopa_smb1",
+			"koopa_troopa_smb1",
+			"koopa_troopa_smb1",
+			"red_koopa_smb1",
+			"red_koopa_smb1",
+			"parakoopa_smb1",
+			"piranha_plant_smb1",
+			"piranha_plant_smb1",
+			"buzzy_beetle_smb1",
+		]
+	}if(user.benchedCards == undefined){
+		user.benchedCards = {} //cards you own but aren't in the deck. stored as little_goomba_smb1: 1. undefined means 0.
+	}
+	
+	await redify("users",username,user)
+	res.json(user)
+})
 
 
 
@@ -490,7 +969,7 @@ function sineEncrypt(input){ //I have no clue if this is a good way to do this
 
 
 async function deleteOldSessions(){
-
+	
 	let currTime = new Date().getTime()
 	let sessions = await getSessions()
 	
@@ -504,3 +983,15 @@ async function deleteOldSessions(){
 	
 	
 }setInterval(deleteOldSessions,60000)//clear check every minute
+
+
+function shuffle(deck){
+	deck = JSON.parse(JSON.stringify(deck))
+	let newDeck = []
+	
+	while(deck.length > 0){
+		let card = deck.splice(Math.floor(Math.random()*deck.length),1)
+		newDeck = newDeck.concat(card)
+	}
+	return newDeck
+}
