@@ -66,3 +66,7 @@ hr{
 .selected{
     transform: translateY(-20px);
 }
+
+.grabbed{
+	transform: rotateZ(180deg);
+}

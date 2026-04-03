@@ -313,6 +313,8 @@ app.get('/joinGame',async (req,res)=>{
 			break
 		case "MARIO":
 			let shuffledDeck = shuffle((await getUsers())[sessions[userSess].u].deck)
+			shuffledDeck.splice(20,0,CARD("checkpoint_smb1",sessions[userSess].u))
+			shuffledDeck = shuffledDeck.concat(CARD("flagpole_smb1",sessions[userSess].u))
 			game.gameData[sessions[userSess].u] = {
 				queue: [CARD(shuffledDeck.pop(),sessions[userSess].u),CARD(shuffledDeck.pop(),sessions[userSess].u),CARD(shuffledDeck.pop(),sessions[userSess].u),CARD(shuffledDeck.pop(),sessions[userSess].u),CARD(shuffledDeck.pop(),sessions[userSess].u),],
 				deck: shuffledDeck,
@@ -326,6 +328,7 @@ app.get('/joinGame',async (req,res)=>{
 				},
 				discard: [],
 			}
+			
 			if(game.players.length == 2){
 				game.gameData.turn.player = game.players[Math.floor(Math.random()*2)]
 			}
@@ -487,6 +490,29 @@ app.get('/marioPlay',async (req,res) => {
 	
 	res.json(true)
 })
+
+app.get('/throw',async (req,res) => {
+	let game = await deredify('games',req.query.g)
+	let user = (await getSessions())[sineEncrypt(req.query.s)]
+	
+	let player = game.gameData[user.u]
+	let opponent = null
+	
+	for(let p of game.players){
+		if(p != user.u){
+			opponent = game.gameData[p]
+			break
+		}
+	}
+	
+	let card = player.hand[req.query.c]
+	onThrow(card.onThrow,player,game,user.u,card)
+	
+	player.hand.splice(req.query.c,1)
+	
+	res.json(true)
+})
+
 app.get('/resolveQueue', async (req,res) => {
 	let s = sineEncrypt(req.query.s)
 	let g = req.query.g
@@ -505,10 +531,6 @@ app.get('/resolveQueue', async (req,res) => {
 	}
 	
 	let resolvingCard = game.gameData[user.u].queue.shift()
-	game.gameData[resolvingCard.owner].discard = game.gameData[resolvingCard.owner].discard.concat(resolvingCard.name)
-	for(let card of resolvingCard.pile){
-		game.gameData[card.owner].discard = game.gameData[card.owner].discard.concat(card.name)
-	}
 	
 	onEncounter(resolvingCard.onEncounter,player,game,user.u)
 
@@ -541,21 +563,36 @@ app.get('/resolveQueue', async (req,res) => {
 					player.state.lives = 3
 				}
 			}
-			game.gameData.turn.player = opponent
-			game.gameData.turn.phase = "play"
-			do{
-				player.hand = player.hand.concat(CARD(player.deck.pop(),user.u))
-			}while(player.hand.length < 5) //If you have <5 cards, draw up to 5. Otherwise, draw 1.
+			
+			await endTurn(user.u,opponent,game,player)
 		}else if(result == 1){ //stomp
-			game.gameData.turn.player = opponent
-			game.gameData.turn.phase = "play"
-			do{
-				player.hand = player.hand.concat(CARD(player.deck.pop(),user.u))
-			}while(player.hand.length < 5) //If you have <5 cards, draw up to 5. Otherwise, draw 1.
+			if(resolvingCard.traits.grabbable){
+				resolvingCard.grabbed = true
+				player.hand = player.hand.concat(resolvingCard)
+				onStomp(resolvingCard.onStomp,player,game,user.u,resolvingCard)
+				await endTurn(user.u,opponent,game,player)
+				await redify('games',g,game)
+				res.json(true)
+				return //I don't want to discard the card if it gets grabbed
+			}
+			onStomp(resolvingCard.onStomp,player,game,user.u,resolvingCard)
+			await endTurn(user.u,opponent,game,player)
+		}else if(result == 2){ //jump over
+			onJump(resolvingCard.onJump,player,game,user.u,resolvingCard)
 		}
 		
 		
 	}
+	
+	if(!resolvingCard.isAux){
+		game.gameData[resolvingCard.owner].discard = game.gameData[resolvingCard.owner].discard.concat(resolvingCard.name)
+	}
+	for(let card of resolvingCard.pile){
+		if(!card.isAux){
+			game.gameData[card.owner].discard = game.gameData[card.owner].discard.concat(card.name)
+		}
+	}
+	
 	
 	await redify('games',g,game)
 	
@@ -578,15 +615,23 @@ app.get('/endTurn', async (req,res) => {
 		}
 	}
 	
-	game.gameData.turn.player = opponent
-	game.gameData.turn.phase = "play"
-	do{
-		player.hand = player.hand.concat(CARD(player.deck.pop(),user.u))
-	}while(player.hand.length < 5) //If you have <5 cards, draw up to 5. Otherwise, draw 1.
+	await endTurn(user.u,opponent,game,player)
 	
 	await redify('games',g,game)
 	res.json(true)
 })
+
+async function endTurn(user,opponent,game,player){
+	
+	
+	game.gameData.turn.player = opponent
+	game.gameData.turn.phase = "play"
+	do{
+		player.hand = player.hand.concat(CARD(player.deck.pop(),user))
+	}while(player.hand.length < 5) //If you have <5 cards, draw up to 5. Otherwise, draw 1.
+	
+	return game
+}
 
 function CARD(name,owner=null){
 	let card = defaultCARD()
@@ -835,7 +880,7 @@ function battle(card,player){
 }
 
 
-function onEncounter(flag,player,game={},playerName = ""){//idk if game is necesary
+function onEncounter(flag,player,game={},playerName = ""){
 	let die
 	switch(flag){
 	case null:
@@ -891,7 +936,60 @@ function onEncounter(flag,player,game={},playerName = ""){//idk if game is neces
 			player.state.power = ""
 			player.state.mush = false
 			player.state.lives --
+			
+			let opponent = null
+			for(let p of game.players){
+				if(p != user.u){
+					opponent = p
+					break
+				}
+			}
+			
+			endTurn(playerName,opponent,game,player)
 		}break
+	}
+}
+
+function onJump(flag,player,game,playerName,card){
+	let die
+	switch(flag){
+		case null:
+			return
+		case 0: //replace at end of queue
+			player.queue = player.queue.concat(card)
+			break
+	}
+}
+function onStomp(flag,player,game,playerName,card){
+	let die
+	switch(flag){
+		case null:
+			return
+		case 100: //parakoopa
+			let aux = CARD("koopa_troopa_smb1")
+			aux.isAux = true
+			player.queue.unshift(aux)
+			break
+	}
+}
+
+function onThrow(flag,player,game,playerName,card){
+	let die
+	switch(flag){
+		case 0: //default throw ability
+			if(player.queue[0].type == "e"){
+				player.queue.shift()
+			}
+			break
+		case 1: //koopas and other shell creepers
+			while(player.queue[0].type == "e"){
+				player.queue.shift()
+			}
+			card.grabbable = false
+			
+			player.queue.unshift(card)
+			break
+		
 	}
 }
 

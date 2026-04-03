@@ -227,7 +227,9 @@ async function updateGame(recurse = true){
 			}
 			let newData = ""
 			for(let card in cardLists[div]){
-				newData += '<img src="' + cardLists[div][card].img + '" class="gameCard" index="' + card + '"' +
+				newData += '<img src="' + cardLists[div][card].img + '" class="gameCard' + 
+					(()=>{if(cardLists[div][card].grabbed){return ' grabbed'}else{return ''}})() +
+					'" index="' + card + '"' +
 					(()=>{if(div == 3){return ' onclick="cardChoice(this)"'}})() + '>' //only adds the onclick when editing playerHand
 			}
 			
@@ -325,6 +327,10 @@ async function cardChoice(elem){
     let hand = game.gameData[user.u].hand
     
     let selectingCard = hand[elem.getAttribute("index")]
+	
+	if(selectingCard.grabbed){
+		await fetch(ROOT + "throw?g="+currentGame+"&s="+session+"&c="+elem.getAttribute("index"))
+	}
     
     
     if(selectingCard.type != localGameData.mario.typeChosen && localGameData.mario.typeChosen != null){
