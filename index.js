@@ -313,8 +313,8 @@ app.get('/joinGame',async (req,res)=>{
 			break
 		case "MARIO":
 			let shuffledDeck = shuffle((await getUsers())[sessions[userSess].u].deck)
-			shuffledDeck.splice(20,0,CARD("checkpoint_smb1",sessions[userSess].u))
-			shuffledDeck = shuffledDeck.concat(CARD("flagpole_smb1",sessions[userSess].u))
+			shuffledDeck.splice(20,0,"checkpoint_smb1")
+			shuffledDeck.unshift("flagpole_smb1")
 			game.gameData[sessions[userSess].u] = {
 				queue: [CARD(shuffledDeck.pop(),sessions[userSess].u),CARD(shuffledDeck.pop(),sessions[userSess].u),CARD(shuffledDeck.pop(),sessions[userSess].u),CARD(shuffledDeck.pop(),sessions[userSess].u),CARD(shuffledDeck.pop(),sessions[userSess].u),],
 				deck: shuffledDeck,
